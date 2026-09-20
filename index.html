@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>APPZONE - Download Apps</title>
+
+<style>
+
+/* =========================
+   RESET
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #050505;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+
+/* =========================
+   BACKGROUND GLOW
+========================= */
+
+body::before {
+    content: "";
+    position: fixed;
+
+    width: 400px;
+    height: 400px;
+
+    background: #ff0000;
+
+    filter: blur(180px);
+    opacity: .10;
+
+    top: -150px;
+    left: -150px;
+
+    z-index: -1;
+}
+
+body::after {
+    content: "";
+
+    position: fixed;
+
+    width: 350px;
+    height: 350px;
+
+    background: #ff0000;
+
+    filter: blur(180px);
+    opacity: .08;
+
+    right: -150px;
+    bottom: -100px;
+
+    z-index: -1;
+}
+
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+
+    height: 70px;
+
+    padding: 0 22px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+    background: rgba(5,5,5,.85);
+
+    backdrop-filter: blur(18px);
+
+    border-bottom: 1px solid #202020;
+}
+
+
+.logo {
+
+    font-size: 22px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: #ff2525;
+}
+
+
+.menu-btn {
+
+    width: 45px;
+    height: 45px;
+
+    border-radius: 12px;
+
+    border: 1px solid #292929;
+
+    background: #111;
+
+    color: white;
+
+    font-size: 23px;
+
+    cursor: pointer;
+
+    transition: .25s;
+}
+
+.menu-btn:hover {
+
+    background: #ff2020;
+
+    border-color: #ff2020;
+
+    transform: rotate(5deg) scale(1.05);
+}
+
+
+/* =========================
+   SIDE MENU
+========================= */
+
+.side-menu {
+
+    position: fixed;
+
+    top: 0;
+    right: -310px;
+
+    width: 290px;
+    height: 100vh;
+
+    background: #0c0c0c;
+
+    border-left: 1px solid #292929;
+
+    z-index: 1000;
+
+    padding: 25px;
+
+    transition: .4s cubic-bezier(.68,-.55,.27,1.55);
+
+    box-shadow: -20px 0 70px rgba(0,0,0,.7);
+}
+
+.side-menu.open {
+    right: 0;
+}
+
+
+.menu-title {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 35px;
+}
+
+.menu-title h2 {
+    font-size: 22px;
+}
+
+.close-btn {
+
+    border: none;
+
+    background: #191919;
+
+    color: white;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+
+    font-size: 25px;
+
+    cursor: pointer;
+}
+
+
+.menu-link {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 15px;
+
+    margin-bottom: 10px;
+
+    border-radius: 12px;
+
+    color: #ddd;
+
+    text-decoration: none;
+
+    border: 1px solid transparent;
+
+    transition: .25s;
+}
+
+.menu-link:hover {
+
+    color: white;
+
+    background: #1c0909;
+
+    border-color: #401313;
+
+    transform: translateX(5px);
+}
+
+
+/* OVERLAY */
+
+.overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0,0,0,.75);
+
+    z-index: 999;
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    transition: .3s;
+}
+
+.overlay.show {
+
+    opacity: 1;
+
+    visibility: visible;
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+
+    min-height: 520px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    padding: 70px 20px;
+
+    position: relative;
+}
+
+
+.hero-content {
+
+    max-width: 750px;
+
+    animation: heroIn 1s ease;
+}
+
+
+.badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 9px 16px;
+
+    border-radius: 50px;
+
+    background: #160707;
+
+    border: 1px solid #4b1515;
+
+    color: #ff5555;
+
+    font-size: 12px;
+
+    margin-bottom: 25px;
+
+    box-shadow: 0 0 30px rgba(255,0,0,.08);
+}
+
+
+.hero h1 {
+
+    font-size: clamp(42px, 10vw, 75px);
+
+    line-height: 1;
+
+    font-weight: 900;
+
+    letter-spacing: -3px;
+
+    margin-bottom: 25px;
+}
+
+.hero h1 span {
+
+    display: block;
+
+    color: #ff2424;
+
+    text-shadow: 0 0 35px rgba(255,0,0,.25);
+}
+
+
+.hero p {
+
+    color: #999;
+
+    line-height: 1.7;
+
+    max-width: 570px;
+
+    margin: auto;
+
+    font-size: 15px;
+}
+
+
+/* HERO BUTTON */
+
+.explore {
+
+    display: inline-flex;
+
+    margin-top: 32px;
+
+    padding: 15px 25px;
+
+    border-radius: 12px;
+
+    background: #ff2424;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-weight: bold;
+
+    box-shadow: 0 12px 35px rgba(255,0,0,.20);
+
+    transition: .25s;
+}
+
+.explore:hover {
+
+    transform: translateY(-4px);
+
+    box-shadow: 0 18px 45px rgba(255,0,0,.35);
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+.search-wrapper {
+
+    max-width: 750px;
+
+    margin: -25px auto 0;
+
+    padding: 0 20px;
+
+    position: relative;
+
+    z-index: 5;
+}
+
+
+.search-box {
+
+    height: 60px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 0 18px;
+
+    background: #111;
+
+    border: 1px solid #292929;
+
+    border-radius: 17px;
+
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+
+    transition: .3s;
+}
+
+
+.search-box:focus-within {
+
+    border-color: #ff2424;
+
+    box-shadow:
+        0 0 0 4px rgba(255,0,0,.06),
+        0 20px 60px rgba(0,0,0,.5);
+}
+
+
+.search-icon {
+
+    font-size: 21px;
+
+    color: #ff3030;
+}
+
+
+.search-box input {
+
+    width: 100%;
+
+    background: transparent;
+
+    border: none;
+
+    outline: none;
+
+    color: white;
+
+    font-size: 15px;
+}
+
+.search-box input::placeholder {
+    color: #666;
+}
+
+
+/* =========================
+   APPS
+========================= */
+
+.apps-section {
+
+    max-width: 1100px;
+
+    margin: auto;
+
+    padding: 90px 20px;
+}
+
+
+.section-head {
+
+    text-align: center;
+
+    margin-bottom: 35px;
+}
+
+
+.section-head h2 {
+
+    font-size: 35px;
+
+    margin-bottom: 8px;
+}
+
+.section-head h2 span {
+    color: #ff2929;
+}
+
+.section-head p {
+    color: #777;
+}
+
+
+.app-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(290px, 1fr));
+
+    gap: 20px;
+}
+
+
+/* APP CARD */
+
+.app-card {
+
+    background:
+        linear-gradient(
+            145deg,
+            #151515,
+            #0c0c0c
+        );
+
+    border: 1px solid #242424;
+
+    border-radius: 20px;
+
+    padding: 20px;
+
+    position: relative;
+
+    overflow: hidden;
+
+    transition: .35s;
+
+    animation: cardIn .7s ease both;
+}
+
+
+.app-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    background: #ff0000;
+
+    filter: blur(80px);
+
+    opacity: .08;
+
+    top: -60px;
+    right: -60px;
+}
+
+
+.app-card:hover {
+
+    transform: translateY(-8px);
+
+    border-color: #541919;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.5),
+        0 0 35px rgba(255,0,0,.05);
+}
+
+
+.app-top {
+
+    display: flex;
+
+    gap: 16px;
+
+    align-items: center;
+
+    margin-bottom: 17px;
+}
+
+
+.app-icon {
+
+    width: 75px;
+    height: 75px;
+
+    border-radius: 18px;
+
+    object-fit: cover;
+
+    border: 1px solid #333;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+
+
+.app-info h3 {
+
+    font-size: 19px;
+
+    margin-bottom: 7px;
+}
+
+
+.meta {
+
+    font-size: 12px;
+
+    color: #777;
+}
+
+
+.app-description {
+
+    color: #888;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    margin-bottom: 17px;
+}
+
+
+/* DOWNLOAD */
+
+.download-btn {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 13px 15px;
+
+    border-radius: 11px;
+
+    background: #1b0808;
+
+    border: 1px solid #401313;
+
+    color: #ff4141;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    transition: .25s;
+}
+
+.download-btn span {
+
+    font-size: 18px;
+
+    transition: .25s;
+}
+
+.download-btn:hover {
+
+    background: #ff2424;
+
+    border-color: #ff2424;
+
+    color: white;
+
+    box-shadow: 0 10px 25px rgba(255,0,0,.20);
+}
+
+.download-btn:hover span {
+
+    transform: translateX(5px);
+}
+
+
+/* =========================
+   NO RESULT
+========================= */
+
+.no-results {
+
+    display: none;
+
+    text-align: center;
+
+    padding: 50px;
+
+    color: #666;
+}
+
+
+/* =========================
+   SUPPORT
+========================= */
+
+.support-section {
+
+    max-width: 750px;
+
+    margin: auto;
+
+    padding: 20px 20px 100px;
+}
+
+
+.support-card {
+
+    text-align: center;
+
+    padding: 35px 25px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #151515,
+            #090909
+        );
+
+    border: 1px solid #292929;
+
+    border-radius: 22px;
+
+    box-shadow: 0 25px 70px rgba(0,0,0,.45);
+}
+
+
+.support-icon {
+
+    width: 65px;
+    height: 65px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: auto auto 15px;
+
+    border-radius: 18px;
+
+    background: #210909;
+
+    font-size: 29px;
+}
+
+
+.support-card h2 {
+
+    font-size: 28px;
+
+    margin-bottom: 10px;
+}
+
+.support-card > p {
+
+    color: #888;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    max-width: 500px;
+
+    margin: auto auto 25px;
+}
+
+
+.request-input {
+
+    width: 100%;
+
+    padding: 14px;
+
+    margin-bottom: 12px;
+
+    border-radius: 11px;
+
+    border: 1px solid #292929;
+
+    background: #080808;
+
+    color: white;
+
+    outline: none;
+
+    font-family: Arial;
+}
+
+
+.request-input:focus {
+
+    border-color: #ff2424;
+
+    box-shadow: 0 0 0 3px rgba(255,0,0,.05);
+}
+
+
+textarea.request-input {
+
+    min-height: 100px;
+
+    resize: vertical;
+}
+
+
+.telegram-btn {
+
+    width: 100%;
+
+    padding: 15px;
+
+    border: none;
+
+    border-radius: 11px;
+
+    background: #ff2424;
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: .25s;
+}
+
+
+.telegram-btn:hover {
+
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 15px 35px rgba(255,0,0,.25);
+}
+
+
+.contact {
+
+    margin-top: 18px;
+
+    color: #666;
+
+    font-size: 12px;
+}
+
+.contact a {
+
+    color: #ff4141;
+
+    text-decoration: none;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+
+    text-align: center;
+
+    padding: 30px;
+
+    border-top: 1px solid #171717;
+
+    color: #555;
+
+    font-size: 12px;
+}
+
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes heroIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(35px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+@keyframes cardIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:600px) {
+
+    .navbar {
+        padding: 0 16px;
+    }
+
+    .hero {
+        min-height: 470px;
+    }
+
+    .hero h1 {
+        font-size: 43px;
+    }
+
+    .app-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .apps-section {
+        padding-top: 70px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     NAVBAR
+========================= -->
+
+<header class="navbar">
+
+    <div class="logo">
+        <span>APP</span>ZONE
+    </div>
+
+    <button
+        class="menu-btn"
+        onclick="openMenu()"
+    >
+        ☰
+    </button>
+
+</header>
+
+
+<!-- =========================
+     SIDE MENU
+========================= -->
+
+<div
+    id="overlay"
+    class="overlay"
+    onclick="closeMenu()"
+></div>
+
+
+<div
+    id="sideMenu"
+    class="side-menu"
+>
+
+    <div class="menu-title">
+
+        <h2>Menu</h2>
+
+        <button
+            class="close-btn"
+            onclick="closeMenu()"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <a
+        href="/"
+        class="menu-link"
+        onclick="closeMenu()"
+    >
+        🏠 Home
+    </a>
+
+
+    <a
+        href="#apps"
+        class="menu-link"
+        onclick="closeMenu()"
+    >
+        📱 All Apps
+    </a>
+
+
+    <a
+        href="#search"
+        class="menu-link"
+        onclick="closeMenu()"
+    >
+        🔍 Search Apps
+    </a>
+
+
+    <a
+        href="#support"
+        class="menu-link"
+        onclick="closeMenu()"
+    >
+        🛠️ Request App
+    </a>
+
+
+    <a
+        href="https://t.me/dulu_x"
+        target="_blank"
+        class="menu-link"
+    >
+        💬 Contact Support
+    </a>
+
+</div>
+
+
+<!-- =========================
+     HERO
+========================= -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <div class="badge">
+            🚀 Fast & Secure Downloads
+        </div>
+
+
+        <h1>
+            Download Your
+            <span>Favorite Apps</span>
+        </h1>
+
+
+        <p>
+            Discover useful Android applications
+            and download them quickly from one place.
+        </p>
+
+
+        <a
+            href="#apps"
+            class="explore"
+        >
+            Explore Apps ↓
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     SEARCH
+========================= -->
+
+<section
+    id="search"
+    class="search-wrapper"
+>
+
+    <div class="search-box">
+
+        <div class="search-icon">
+            🔍
+        </div>
+
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Search apps..."
+            oninput="searchApps()"
+        >
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     APPS
+========================= -->
+
+<section
+    id="apps"
+    class="apps-section"
+>
+
+    <div class="section-head">
+
+        <h2>
+            Our <span>Apps</span>
+        </h2>
+
+        <p>
+            Choose an application to download
+        </p>
+
+    </div>
+
+
+    <div
+        id="appGrid"
+        class="app-grid"
+    >
+
+        {% for app in apps %}
+
+        <div
+            class="app-card"
+            data-name="{{ app.name|lower }}"
+        >
+
+            <div class="app-top">
+
+                <img
+                    src="{{ app.icon }}"
+                    class="app-icon"
+                    alt="{{ app.name }}"
+                >
+
+
+                <div class="app-info">
+
+                    <h3>
+                        {{ app.name }}
+                    </h3>
+
+                    <div class="meta">
+                        {{ app.version }} • {{ app.size }}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="app-description">
+
+                {{ app.description }}
+
+            </div>
+
+
+            <a
+                href="/app/{{ loop.index0 }}"
+                class="download-btn"
+            >
+
+                <span>
+                    Download APK
+                </span>
+
+                <span>
+                    →
+                </span>
+
+            </a>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <div
+        id="noResults"
+        class="no-results"
+    >
+
+        🔎 No app found
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     SUPPORT
+========================= -->
+
+<section
+    id="support"
+    class="support-section"
+>
+
+    <div class="support-card">
+
+        <div class="support-icon">
+            🛠️
+        </div>
+
+
+        <h2>
+            Need an App?
+        </h2>
+
+
+        <p>
+
+            Can't find the application you're
+            looking for? Send us a request.
+
+        </p>
+
+
+        <input
+            id="appName"
+            class="request-input"
+            type="text"
+            placeholder="App name"
+        >
+
+
+        <textarea
+            id="appMessage"
+            class="request-input"
+            placeholder="Tell us what app you need..."
+        ></textarea>
+
+
+        <button
+            class="telegram-btn"
+            onclick="sendRequest()"
+        >
+
+            📲 Request on Telegram
+
+        </button>
+
+
+        <div class="contact">
+
+            Direct contact:
+
+            <a
+                href="https://t.me/dulu_x"
+                target="_blank"
+            >
+                @dulu_x
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<footer>
+
+    © 2026 APPZONE • All Rights Reserved
+
+</footer>
+
+
+<script>
+
+/* =========================
+   MENU
+========================= */
+
+function openMenu() {
+
+    document
+        .getElementById("sideMenu")
+        .classList.add("open");
+
+    document
+        .getElementById("overlay")
+        .classList.add("show");
+}
+
+
+function closeMenu() {
+
+    document
+        .getElementById("sideMenu")
+        .classList.remove("open");
+
+    document
+        .getElementById("overlay")
+        .classList.remove("show");
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+function searchApps() {
+
+    const search =
+        document
+        .getElementById("searchInput")
+        .value
+        .toLowerCase()
+        .trim();
+
+
+    const cards =
+        document
+        .querySelectorAll(".app-card");
+
+
+    let found = 0;
+
+
+    cards.forEach(card => {
+
+        const name =
+            card
+            .getAttribute("data-name");
+
+
+        if (name.includes(search)) {
+
+            card.style.display = "block";
+
+            found++;
+
+        } else {
+
+            card.style.display = "none";
+
+        }
+
+    });
+
+
+    document
+        .getElementById("noResults")
+        .style.display =
+            found === 0
+            ? "block"
+            : "none";
+}
+
+
+/* =========================
+   TELEGRAM REQUEST
+========================= */
+
+function sendRequest() {
+
+    const appName =
+        document
+        .getElementById("appName")
+        .value
+        .trim();
+
+
+    const message =
+        document
+        .getElementById("appMessage")
+        .value
+        .trim();
+
+
+    if (!appName) {
+
+        alert("Please enter the app name.");
+
+        return;
+    }
+
+
+    const text =
+        "Hello @dulu_x,%0A%0A" +
+        "📱 App Request: " +
+        encodeURIComponent(appName) +
+        "%0A%0A" +
+        "📝 Message: " +
+        encodeURIComponent(
+            message || "Please add this app."
+        );
+
+
+    window.open(
+        "https://t.me/dulu_x?text=" + text,
+        "_blank"
+    );
+}
+
+</script>
+
+
+</body>
+
+</html>

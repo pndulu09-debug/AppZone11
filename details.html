@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app.name }} APK Download - AppZone</title>
+    <meta name="description" content="Download {{ app.name }} APK for Android. {{ app.description }}">
+    <meta name="theme-color" content="#050505">
+    <link rel="stylesheet" href="/css/details.css">
+</head>
+<body>
+
+<header class="navbar">
+    <a href="/" class="back">← Back</a>
+    <a href="/" class="logo"><span>APP</span>ZONE</a>
+</header>
+
+<main class="details-page">
+
+    <div class="details-card">
+
+        <div class="app-head">
+            <img
+                src="{{ app.icon }}"
+                class="big-icon"
+                alt="{{ app.name }}"
+                width="112" height="112"
+                onerror="this.outerHTML='<div class=&quot;big-icon fallback&quot;>{{ app.name[0]|upper }}</div>'"
+            >
+            <div class="app-head-text">
+                <h1>{{ app.name }}</h1>
+                <div class="chips">
+                    <span class="chip">Version: {{ app.version }}</span>
+                    <span class="chip">Size: {{ app.size }}</span>
+                    <span class="chip">Android</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="description">{{ app.description }}</p>
+
+        <!-- AD SPACE: yahan apna ad code (AdSense etc.) paste karo -->
+        <div class="ad-box">
+            <span>ADVERTISEMENT</span>
+        </div>
+
+        <a href="{{ app.download }}" class="main-download" target="_blank" rel="noopener nofollow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>
+            Download APK
+        </a>
+
+        <p class="small-text">Download will start from the external file host.</p>
+
+    </div>
+
+    <h2 class="section-title">How to install</h2>
+    <ol class="steps">
+        <li><span>Tap <b>Download APK</b> and finish the steps on the download page.</span></li>
+        <li><span>Open the downloaded file. If Android asks, allow installs from this browser.</span></li>
+        <li><span>Tap <b>Install</b>, then open the app.</span></li>
+    </ol>
+
+    {% if others %}
+    <h2 class="section-title">More apps</h2>
+    <div class="more-grid">
+        {% for o in others %}
+        <a href="/app/{{ o.id }}" class="more-card">
+            <img src="{{ o.icon }}" alt="{{ o.name }}" loading="lazy" width="60" height="60"
+                 onerror="this.style.visibility='hidden'">
+            <span>{{ o.name }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</main>
+
+<footer>© 2026 AppZone</footer>
+
+</body>
+</html>
