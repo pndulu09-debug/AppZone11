@@ -1,8 +1,25 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, abort, render_template, send_from_directory
 
-# static files "public/" folder se serve hoti hain (Vercel + local dono par chalta hai)
-app = Flask(__name__, static_folder="public", static_url_path="")
+BASE = os.path.dirname(os.path.abspath(__file__))
+
+# Flat structure: saari files (html, css, png) repo ke root me hain.
+# static_folder=None -> app.py jaisi files kabhi public nahi hongi.
+app = Flask(__name__, template_folder=BASE, static_folder=None)
+
+
+@app.route("/css/details.css")
+def details_css():
+    return send_from_directory(BASE, "details.css", mimetype="text/css")
+
+
+@app.route("/icons/<path:filename>")
+def icons(filename):
+    # sirf .png files allow hain
+    if "/" in filename or not filename.lower().endswith(".png"):
+        abort(404)
+    return send_from_directory(BASE, filename)
+
 
 apps = [
     {
