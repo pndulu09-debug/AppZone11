@@ -24,16 +24,16 @@ def icons(filename):
 apps = [
     {
         "name": "CapCut",
-        "version": "Latest",
-        "size": "Varies",
+        "version": "v28.0.0",
+        "size": "278.2 MB",
         "icon": "/icons/capcut.png",
         "description": "CapCut video editor.",
         "download": "https://vplink.in/aFaBR"
     },
     {
         "name": "YouTube",
-        "version": "Latest",
-        "size": "Varies",
+        "version": "v21.07.247",
+        "size": "187.6 MB",
         "icon": "/icons/youtube.png",
         "description": "YouTube app.",
         "download": "https://vplink.in/wUDAn1"
