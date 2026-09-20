@@ -65,23 +65,23 @@ def favicon():
 
 apps = [
     {
-        "name": "CapCut",
+        "name": "CapCut Ultra",
         "version": "v28.0.0",
         "size": "278.2 MB",
         "icon": "/icons/capcut.png",
-        "description": "CapCut video editor.",
+        "description": "Supported All phones, Without VPN usable.",
         "download": "https://vplink.in/aFaBR"
     },
     {
-        "name": "YouTube",
+        "name": "YouTube Premium",
         "version": "v21.07.247",
         "size": "187.6 MB",
         "icon": "/icons/youtube.png",
-        "description": "YouTube app.",
+        "description": "All Ads Remove+ Extra Future.",
         "download": "https://vplink.in/wUDAn1"
     },
     {
-        "name": "Truecaller",
+        "name": "Truecaller Premium",
         "version": "Latest",
         "size": "Varies",
         "icon": "/icons/truecaller.png",
@@ -89,7 +89,7 @@ apps = [
         "download": "https://vplink.in/kaAj"
     },
     {
-        "name": "Telegram",
+        "name": "Telegram Premium",
         "version": "Latest",
         "size": "Varies",
         "icon": "/icons/telegram.png",
@@ -97,7 +97,7 @@ apps = [
         "download": "https://vplink.in/OIBgy3"
     },
     {
-        "name": "TeraBox",
+        "name": "TeraBox Premium",
         "version": "v4.24.0",
         "size": "Varies",
         "icon": "/icons/terabox.png",
