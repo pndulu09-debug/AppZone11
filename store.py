@@ -60,6 +60,9 @@ class RedisStore:
             out.append(item.get("result"))
         return out
 
+    def ping(self):
+        return self._cmd("PING") == "PONG"
+
     def save(self, order):
         self._pipe([
             ["HSET", "ff:orders", order["order_id"], json.dumps(order)],
@@ -117,6 +120,9 @@ class FileStore:
         except Exception:
             self.orders = {}
 
+    def ping(self):
+        return True
+
     def _flush(self):
         try:
             with open(self.path, "w", encoding="utf-8") as f:
@@ -160,9 +166,22 @@ class FileStore:
         self.fails.pop(ip, None)
 
 
+def _find_redis_env():
+    """Vercel/Upstash env names alag ho sakte hain (custom prefix bhi) - sab check karo."""
+    env = os.environ
+    for url_suffix, tok_suffix in (("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"),
+                                   ("KV_REST_API_URL", "KV_REST_API_TOKEN")):
+        for key, val in env.items():
+            if key.endswith(url_suffix) and val:
+                prefix = key[: -len(url_suffix)]
+                tok = env.get(prefix + tok_suffix)
+                if tok:
+                    return val, tok
+    return None
+
+
 def make_store(base_dir):
-    url = os.environ.get("UPSTASH_REDIS_REST_URL") or os.environ.get("KV_REST_API_URL")
-    tok = os.environ.get("UPSTASH_REDIS_REST_TOKEN") or os.environ.get("KV_REST_API_TOKEN")
-    if url and tok:
-        return RedisStore(url, tok)
+    found = _find_redis_env()
+    if found:
+        return RedisStore(*found)
     return FileStore(os.path.join(base_dir, "orders.json"))
