@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - AppZone</title><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#050505">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#050505;color:#fff;min-height:100vh}
+body:before{content:"";position:fixed;top:-160px;left:-140px;width:360px;height:360px;background:#f00;filter:blur(170px);opacity:.09;z-index:-1}
+.top{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:rgba(5,5,5,.9);backdrop-filter:blur(14px);border-bottom:1px solid #202020}
+.logo{font-size:19px;font-weight:900;letter-spacing:2px}.logo span{color:#ff2424}.logo small{display:block;font-size:10px;color:#777;letter-spacing:1px;font-weight:600;margin-top:2px}
+.tb{display:flex;gap:8px}.tb a{color:#ddd;text-decoration:none;background:#111;border:1px solid #2a2a2a;padding:9px 12px;border-radius:11px;font-size:12px;font-weight:700}.tb a.out{color:#ff6565;border-color:#3a1818}
+.wrap{max-width:760px;margin:auto;padding:16px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.st{background:#101010;border:1px solid #242424;border-radius:14px;padding:12px 6px;text-align:center}.st b{display:block;font-size:22px}.st small{color:#888;font-size:10px;letter-spacing:.4px}
+.st.w b{color:#ffd24a}.st.p b{color:#ff9f2e}.st.d b{color:#4cd964}
+.o{background:linear-gradient(145deg,#141414,#0a0a0a);border:1px solid #272727;border-radius:16px;padding:15px;margin-top:12px;font-size:14px;line-height:1.75}
+.o .h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+.s{padding:4px 11px;border-radius:99px;font-size:12px;font-weight:800;white-space:nowrap}
+.submitted{background:#2e2600;color:#ffd24a}.pending{background:#222;color:#aaa}.processing{background:#3a2200;color:#ff9f2e}.processed{background:#0c3a17;color:#4cd964}.rejected{background:#3a0c0c;color:#ff6565}
+.k{color:#888}small.m{color:#777}
+.btns{margin-top:10px;display:flex;gap:9px;flex-wrap:wrap}
+button{padding:11px 15px;border:0;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer}.ok{background:#1f9d3a;color:#fff}.no{background:#2a1010;color:#ff6565;border:1px solid #4a1a1a}
+.empty{text-align:center;color:#777;margin-top:60px}
+</style></head><body>
+<div class="top"><div class="logo"><span>APP</span>ZONE<small>ADMIN • {{ admin_user }}</small></div>
+<div class="tb"><a href="/admin">↻ Refresh</a><a class="out" href="/admin/logout">Logout</a></div></div>
+<div class="wrap">
+<div class="stats">
+<div class="st w"><b>{{ stats.submitted }}</b><small>TO APPROVE</small></div>
+<div class="st p"><b>{{ stats.processing }}</b><small>PROCESSING</small></div>
+<div class="st d"><b>{{ stats.processed }}</b><small>PROCESSED</small></div>
+<div class="st"><b>{{ stats.total }}</b><small>TOTAL</small></div>
+</div>
+{% for o in orders %}
+<div class="o">
+<div class="h"><b>{{ o.order_id }}</b><span class="s {{ o.status }}">{{ o.status }}</span></div>
+<span class="k">UID:</span> <b>{{ o.uid }}</b>{% if o.nickname %} ({{ o.nickname }}){% endif %}{% if not o.verified_uid %} <small class="m">(not verified)</small>{% endif %}<br>
+<span class="k">Package:</span> {{ o.label }} • {{ o.likes }} likes • <b>₹{{ o.amount }}</b><br>
+<span class="k">UTR:</span> <b>{{ o.utr or '—' }}</b><br>
+<small class="m">{{ o.created_at }}</small>
+{% if o.status == 'processing' %}
+<div class="btns"><button class="ok" onclick="act('{{ o.order_id }}','processed')">✅ Mark Processed (likes sent)</button></div>
+{% elif o.status in ('submitted','pending') %}
+<div class="btns"><button class="ok" onclick="act('{{ o.order_id }}','approve')">✅ Payment received - Approve</button>
+<button class="no" onclick="act('{{ o.order_id }}','reject')">❌ Reject</button></div>
+{% endif %}
+</div>
+{% else %}<div class="empty">No orders yet.</div>{% endfor %}
+</div>
+<script>
+async function act(id,a){
+  const msg=a==='approve'?'Payment aa gaya? Approve karein?':(a==='processed'?'Likes bhej diye? Processed mark karein?':'Reject karein?');
+  if(!confirm(msg))return;
+  const r=await fetch('/admin/order/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a})});
+  if(r.status===401){location.href='/admin/login';return}
+  location.reload();
+}
+</script></body></html>

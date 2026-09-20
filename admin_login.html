@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login - AppZone</title><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#050505">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#050505;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+body:before,body:after{content:"";position:fixed;width:380px;height:380px;background:#f00;filter:blur(170px);opacity:.1;z-index:-1}
+body:before{top:-160px;left:-140px}body:after{bottom:-160px;right:-140px}
+.box{width:100%;max-width:400px;background:linear-gradient(145deg,#151515,#0a0a0a);border:1px solid #272727;border-radius:24px;padding:32px 24px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.logo{text-align:center;font-size:24px;font-weight:900;letter-spacing:3px}.logo span{color:#ff2424}
+.tag{text-align:center;color:#8a8a8a;font-size:13px;margin:8px 0 26px}
+.lock{width:62px;height:62px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#170808;border:1px solid #3a1414;box-shadow:0 0 30px rgba(255,36,36,.18)}
+label{display:block;font-size:12px;color:#9a9a9a;margin:16px 0 7px;letter-spacing:.5px}
+.f{position:relative}
+input{width:100%;padding:15px 16px;border-radius:13px;border:1px solid #303030;background:#080808;color:#fff;font-size:15px;outline:0}
+input:focus{border-color:#ff2424;box-shadow:0 0 0 3px rgba(255,0,0,.08)}
+.eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:#888;font-size:12px;font-weight:700;padding:8px;cursor:pointer}
+button.go{width:100%;margin-top:24px;padding:16px;border:0;border-radius:13px;background:#ff2424;color:#fff;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 12px 35px rgba(255,0,0,.22)}
+.err{margin-top:16px;padding:12px 14px;border-radius:12px;background:#2a0b0b;border:1px solid #5a1a1a;color:#ff7a7a;font-size:13px;text-align:center}
+.foot{text-align:center;color:#555;font-size:11px;margin-top:22px}
+</style></head><body>
+<form class="box" method="post" autocomplete="off">
+<div class="lock"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff4a4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+<div class="logo"><span>APP</span>ZONE</div>
+<div class="tag">Admin Panel • Sign in to continue</div>
+{% if error %}<div class="err">{{ error }}</div>{% endif %}
+<label for="u">USERNAME</label>
+<input id="u" name="username" placeholder="Enter username" autocapitalize="off" autocorrect="off" required autofocus>
+<label for="p">PASSWORD</label>
+<div class="f"><input id="p" name="password" type="password" placeholder="Enter password" required><button type="button" class="eye" onclick="var i=document.getElementById('p');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'SHOW':'HIDE'">SHOW</button></div>
+<button class="go" type="submit">Login →</button>
+<div class="foot">Authorized access only</div>
+</form></body></html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Fire Likes - AppZone</title>
+<meta name="theme-color" content="#050505">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#050505;--panel:#101010;--line:#272727;--red:#ff2424;--muted:#929292}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden}
+body:before,body:after{content:"";position:fixed;z-index:-1;width:360px;height:360px;background:#f00;filter:blur(160px);opacity:.08}
+body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
+.nav{height:70px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;background:rgba(5,5,5,.86);backdrop-filter:blur(18px);border-bottom:1px solid #202020}
+.back{color:#ddd;text-decoration:none;background:#111;border:1px solid #292929;padding:11px 14px;border-radius:12px;font-size:13px}
+.logo{font-size:21px;font-weight:900;letter-spacing:2px}.logo span{color:var(--red)}
+.wrap{max-width:850px;margin:auto;padding:28px 16px 70px}
+.hero{text-align:center;padding:25px 10px 22px}.fire{font-size:58px;filter:drop-shadow(0 0 22px rgba(255,40,40,.3))}
+.hero h1{font-size:clamp(32px,8vw,54px);margin:10px 0 10px}.hero h1 span{color:var(--red)}
+.hero p{color:var(--muted);font-size:14px;line-height:1.7}
+.card{background:linear-gradient(145deg,#151515,#090909);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 25px 70px rgba(0,0,0,.4);margin-top:18px}
+.card h2{font-size:19px;margin-bottom:15px}
+.uid{width:100%;padding:15px;border-radius:13px;border:1px solid #303030;background:#080808;color:#fff;outline:0;font-size:15px}.uid:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,0,0,.06)}
+.packages{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:15px}
+.pkg{cursor:pointer;background:#0b0b0b;border:1px solid #292929;border-radius:16px;padding:18px 12px;text-align:center;transition:.2s}.pkg:hover{transform:translateY(-3px);border-color:#6b2020}.pkg.selected{border-color:var(--red);background:#1a0808;box-shadow:0 0 0 1px rgba(255,36,36,.15)}
+.pkg .days{color:#bbb;font-size:12px}.pkg .price{font-size:25px;font-weight:900;margin:8px 0 3px}.pkg .likes{color:#ff6565;font-size:12px}
+.summary{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;padding:15px;border-radius:14px;background:#0b0b0b;border:1px solid #252525}.summary small{color:#777}.total{font-size:25px;font-weight:900;color:#ff4444}
+.pay{width:100%;margin-top:15px;padding:16px;border:0;border-radius:13px;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 12px 35px rgba(255,0,0,.2)}.pay:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.note{margin-top:13px;color:#777;font-size:12px;line-height:1.6;text-align:center}
+.status{display:none;margin-top:18px;padding:16px;border-radius:15px;border:1px solid #292929;background:#0b0b0b}.status.show{display:block}.status .title{font-weight:800;margin-bottom:6px}.status .sub{color:#8d8d8d;font-size:12px;line-height:1.6}
+.qrbox{display:none;text-align:center;margin-top:15px;padding:18px;border:1px dashed #3a3a3a;border-radius:15px;background:#090909}.qrbox.show{display:block}.upi{font-weight:800;color:#ff5656;word-break:break-all;margin:8px 0 12px}.upi-btn{display:inline-block;padding:12px 15px;border-radius:11px;background:#ff2424;color:#fff;text-decoration:none;font-size:13px;font-weight:800}
+@media(max-width:650px){.packages{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.summary{align-items:flex-start}}
+.pkg{position:relative}.hotb{position:absolute;top:-9px;right:10px;background:linear-gradient(90deg,#ff2424,#ff8a00);color:#fff;font-size:11px;font-weight:900;padding:3px 10px;border-radius:99px;letter-spacing:1px;box-shadow:0 4px 14px rgba(255,60,0,.4)}.amt{font-size:26px;font-weight:900;color:#ff4444;margin-top:8px}.qrbox label{display:block;color:#aaa;font-size:12px;margin-bottom:8px}
+.fire{display:flex;justify-content:center}.fireico{filter:drop-shadow(0 0 18px rgba(255,90,0,.45))}
+.histbtn{margin-top:14px;padding:11px 18px;border-radius:99px;border:1px solid #3a2020;background:#140909;color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.uidnote{margin-top:10px;padding:11px 13px;border-radius:12px;background:#140c00;border:1px solid #3d2a00;color:#e0b45a;font-size:12px;line-height:1.6}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;align-items:flex-end;justify-content:center}.ov.show{display:flex}
+.sheet{width:100%;max-width:640px;max-height:88vh;overflow:auto;background:#101010;border:1px solid #2a2a2a;border-radius:24px 24px 0 0;padding:20px 18px 28px}
+.sheet .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.sheet .hd h2{font-size:20px}
+.xbtn{width:38px;height:38px;border-radius:50%;border:1px solid #333;background:#181818;color:#fff;font-size:16px;cursor:pointer}
+.srow{display:flex;gap:10px}.srow .uid{flex:1;min-width:0}.sbtn{padding:0 18px;border-radius:13px;border:1px solid #ff2424;background:#1a0808;color:#ff5656;font-weight:800;cursor:pointer}
+.hi{margin-top:12px;padding:14px;border-radius:14px;background:#0b0b0b;border:1px solid #272727}.hi .hh{display:flex;justify-content:space-between;gap:10px;align-items:center}.hi .hs{color:#8d8d8d;font-size:12px;margin-top:5px;line-height:1.5}
+.pill{font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.p-submitted{background:#2e2600;color:#ffd24a}.p-processing{background:#3a2200;color:#ff9f2e}.p-processed{background:#0c3a17;color:#4cd964}.p-rejected{background:#3a0c0c;color:#ff6565}
+</style>
+</head>
+<body>
+<header class="nav">
+<a class="back" href="/">← Back</a><div class="logo"><span>APP</span>ZONE</div>
+</header>
+
+<main class="wrap">
+<section class="hero">
+<div class="fire"><svg class="fireico" width="72" height="72" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="fg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff2a00"/><stop offset=".6" stop-color="#ff7a00"/><stop offset="1" stop-color="#ffc83d"/></linearGradient></defs><path d="M32 3 C34 14 46 20 50 34 C54 48 44 61 32 61 C20 61 10 50 13 37 C15 29 20 25 23 18 C25 22 27 25 29 26 C30 18 30 10 32 3 Z" fill="url(#fg)"/><path d="M32 58 C25 58 21 53 22 47 C23 41 28 38 30 32 C33 36 34 38 38 41 C41 44 42 48 41 51 C40 55 37 58 32 58 Z" fill="#fff0a8" opacity=".92"/></svg></div>
+<h1>Free Fire <span>Likes</span></h1>
+<p>Choose your package, enter your Free Fire UID and complete payment.<br>After payment confirmation, your order will move to processing.</p>
+<button type="button" class="histbtn" onclick="openHistory()">📋 Order History</button>
+</section>
+
+<section class="card">
+<h2>1. Enter Free Fire UID</h2>
+<input id="uid" class="uid" inputmode="numeric" maxlength="12" placeholder="Enter your Free Fire UID (India server)">
+<button type="button" id="chkBtn" class="upi-btn" style="border:0;margin-top:10px;cursor:pointer" onclick="verifyUid()">Verify UID</button>
+<div id="uidInfo" style="margin-top:10px;font-size:13px;line-height:1.6"></div>
+<div class="uidnote">⚠️ <b>Please enter your correct UID.</b> If you enter a wrong UID, the likes will go to someone else's account. No refund will be given for wrong UIDs, and the responsibility will be yours.</div>
+
+<h2 style="margin-top:24px">2. Select package</h2>
+<div class="packages">
+{% for p in packages %}
+<div class="pkg{% if loop.first %} selected{% endif %}" data-id="{{p.id}}" data-price="{{p.price}}" data-likes="{{p.likes}}" data-label="{{p.label}}" data-perday="{{p.per_day}}" onclick="selectPkg(this)">{% if p.hot %}<div class="hotb">🔥 HOT</div>{% endif %}
+<div class="days">{{p.label}}</div><div class="price">₹{{p.price}}</div><div class="likes">{{p.per_day}} Likes/day</div><div class="likes" style="font-weight:800;margin-top:4px">Total {{p.likes}} Likes</div>
+</div>
+{% endfor %}
+</div>
+
+<div class="summary">
+<div><small>Selected package</small><br><b id="selectedLabel">{{packages[0].label}} • {{packages[0].per_day}}/day • Total {{packages[0].likes}} Likes</b></div>
+<div class="total" id="total">₹{{packages[0].price}}</div>
+</div>
+
+<button id="payBtn" class="pay" onclick="startOrder()">Continue to Payment →</button>
+<div class="note">Payment is confirmed only by the payment provider/server. Do not trust screenshots or client-side success messages.</div>
+
+<div id="paymentBox" class="qrbox">
+<div style="font-weight:800">Complete your payment</div>
+<div class="amt" id="payAmt"></div>
+<div class="sub" style="color:#777;font-size:12px;margin-top:5px">Exact amount pay karo. QR scan karo ya button dabao.</div>
+<img id="qrImg" alt="UPI QR" style="display:none;width:210px;height:210px;background:#fff;padding:8px;border-radius:12px;margin:12px auto 0" onerror="this.style.display='none'">
+<div class="upi" id="upiText">{{upi_id}}</div>
+<a id="upiBtn" class="upi-btn" href="#">Pay via UPI App</a>
+<div id="utrBox" style="margin-top:18px;text-align:left">
+<label>Payment ke baad 12-digit Transaction ID / UTR yaha daalo:</label>
+<input id="utr" class="uid" inputmode="numeric" maxlength="12" placeholder="12-digit UTR number">
+<button id="utrBtn" class="pay" onclick="submitUtr()">Submit Transaction ID</button>
+</div>
+</div>
+
+<div id="status" class="status">
+<div class="title" id="statusTitle">⏳ Payment pending</div>
+<div class="sub" id="statusSub">Payment karke Transaction ID submit karo. Verify hone ke baad likes 5–10 minute me process honge.</div>
+</div>
+</section>
+</main>
+
+<div id="histOv" class="ov" onclick="if(event.target===this)closeHistory()">
+<div class="sheet">
+<div class="hd"><h2>Order History</h2><button class="xbtn" onclick="closeHistory()">✕</button></div>
+<div style="color:#8d8d8d;font-size:12px;margin-bottom:8px">Apna Free Fire UID daalo</div>
+<div class="srow"><input id="hUid" class="uid" inputmode="numeric" maxlength="12" placeholder="Free Fire UID"><button class="sbtn" onclick="loadHistory()">Search</button></div>
+<div id="hList"></div>
+</div>
+</div>
+
+<script>
+let selected = document.querySelector('.pkg.selected');
+let currentOrder = null;
+
+function selectPkg(el){
+  document.querySelectorAll('.pkg').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected'); selected=el;
+  document.getElementById('selectedLabel').textContent = el.dataset.label+' • '+el.dataset.perday+'/day • Total '+el.dataset.likes+' Likes';
+  document.getElementById('total').textContent='₹'+el.dataset.price;
+}
+
+let verifiedUid=null;
+const uidEl=document.getElementById('uid'), chkBtn=document.getElementById('chkBtn'), uidInfoEl=document.getElementById('uidInfo');
+uidEl.addEventListener('input',()=>{
+  uidEl.value=uidEl.value.replace(/\D/g,'');
+  if(uidEl.value!==verifiedUid){verifiedUid=null;chkBtn.style.display='inline-block';uidInfoEl.textContent='';}
+});
+
+async function verifyUid(){
+  const uid=document.getElementById('uid').value.trim(), box=document.getElementById('uidInfo');
+  if(!/^\d{7,12}$/.test(uid)){box.style.color='#ff5656';box.textContent='❌ UID 7-12 digits ka hona chahiye.';return false}
+  box.style.color='#aaa';box.textContent='Checking…';
+  try{
+    const r=await fetch('/api/free-fire/check-uid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid})});
+    const d=await r.json();
+    if(d.status==='ok'){box.style.color='#4cd964';box.textContent='✅ '+d.nickname+' • India server • Current likes: '+d.likes;verifiedUid=uid;chkBtn.style.display='none';return true}
+    if(d.status==='unconfigured'){box.style.color='#4cd964';box.textContent='✅ UID: '+uid;verifiedUid=uid;chkBtn.style.display='none';return true}
+    box.style.color='#ff5656';box.textContent='❌ '+(d.message||'Verify nahi ho paya');return false
+  }catch(e){box.style.color='#ff5656';box.textContent='❌ Network error';return false}
+}
+
+async function startOrder(){
+  const uid=document.getElementById('uid').value.trim();
+  if(verifiedUid!==uid){ if(!(await verifyUid()))return; }
+  try{localStorage.setItem('ff_uid',uid)}catch(e){}
+  const btn=document.getElementById('payBtn'); btn.disabled=true; btn.textContent='Creating order…';
+  try{
+    const r=await fetch('/api/free-fire/order',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uid:uid,package_id:selected.dataset.id})});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.message||'Could not create order');
+    currentOrder=d.order;
+    document.getElementById('payAmt').textContent='₹'+d.order.amount;
+    document.getElementById('upiBtn').href=d.upi_url;
+    const q=document.getElementById('qrImg'); q.src='/api/free-fire/order/'+d.order.order_id+'/qr.svg'; q.style.display='block';
+    document.getElementById('paymentBox').classList.add('show');
+    document.getElementById('status').classList.add('show');
+    document.getElementById('statusTitle').textContent='⏳ Order '+d.order.order_id+' • Payment pending';
+    document.getElementById('paymentBox').scrollIntoView({behavior:'smooth'});
+    pollStatus();
+  }catch(e){alert(e.message)}
+  finally{btn.disabled=false;btn.textContent='Continue to Payment →'}
+}
+
+async function submitUtr(){
+  const utr=document.getElementById('utr').value.trim();
+  if(!currentOrder)return;
+  if(!/^\d{12}$/.test(utr)){alert('12-digit Transaction ID / UTR daalo.');return}
+  const b=document.getElementById('utrBtn'); b.disabled=true;
+  try{
+    const r=await fetch('/api/free-fire/order/'+currentOrder.order_id+'/utr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utr:utr})});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.message||'Submit nahi hua');
+    document.getElementById('utrBox').style.display='none';
+    document.getElementById('statusTitle').textContent='🔎 Payment verify ho raha hai';
+    document.getElementById('statusSub').textContent='Transaction ID mil gaya. Verify hote hi order process hoga (approx 5–10 minute). Is page ko khula rakho.';
+  }catch(e){alert(e.message)}
+  finally{b.disabled=false}
+}
+
+const STATUS_TXT={submitted:'🔎 Verifying payment',processing:'⏳ Processing',processed:'✅ Processed',rejected:'❌ Rejected'};
+let histTimer=null;
+function openHistory(uid){
+  let u=uid||document.getElementById('uid').value.trim();
+  if(!u){try{u=localStorage.getItem('ff_uid')||''}catch(e){}}
+  document.getElementById('hUid').value=u||'';
+  document.getElementById('histOv').classList.add('show');
+  if(/^\d{7,12}$/.test(u)) loadHistory();
+  clearInterval(histTimer); histTimer=setInterval(()=>{if(/^\d{7,12}$/.test(document.getElementById('hUid').value.trim()))loadHistory(true)},15000);
+}
+function closeHistory(){document.getElementById('histOv').classList.remove('show');clearInterval(histTimer)}
+async function loadHistory(silent){
+  const uid=document.getElementById('hUid').value.trim(), box=document.getElementById('hList');
+  if(!/^\d{7,12}$/.test(uid)){box.innerHTML='';const p=document.createElement('div');p.className='hs';p.style.cssText='color:#ff5656;margin-top:12px;font-size:13px';p.textContent='❌ Sahi UID daalo (7-12 digits).';box.appendChild(p);return}
+  if(!silent){box.textContent='Loading…';box.style.cssText='color:#888;margin-top:12px;font-size:13px'}
+  try{
+    const r=await fetch('/api/free-fire/history?uid='+encodeURIComponent(uid));const d=await r.json();
+    box.innerHTML='';box.style.cssText='';
+    if(!d.ok||!d.orders.length){const p=document.createElement('div');p.style.cssText='color:#888;margin-top:14px;font-size:13px';p.textContent=d.ok?'Is UID par abhi koi order nahi mila.':(d.message||'Error');box.appendChild(p);return}
+    try{localStorage.setItem('ff_uid',uid)}catch(e){}
+    d.orders.forEach(o=>{
+      const it=document.createElement('div');it.className='hi';
+      const hh=document.createElement('div');hh.className='hh';
+      const b=document.createElement('b');b.textContent=o.label+' • '+o.likes+' Likes';
+      const pl=document.createElement('span');pl.className='pill p-'+o.status;pl.textContent=STATUS_TXT[o.status]||o.status;
+      hh.appendChild(b);hh.appendChild(pl);
+      const s1=document.createElement('div');s1.className='hs';
+      s1.textContent='₹'+o.amount+' • '+new Date(o.created_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+      const s2=document.createElement('div');s2.className='hs';s2.textContent='Order '+o.order_id;
+      it.appendChild(hh);it.appendChild(s1);it.appendChild(s2);box.appendChild(it);
+    });
+  }catch(e){if(!silent){box.textContent='Network error'}}
+}
+if(location.hash==='#history')openHistory();
+
+async function pollStatus(){
+  if(!currentOrder)return;
+  try{
+    const r=await fetch('/api/free-fire/order/'+encodeURIComponent(currentOrder.order_id));
+    const d=await r.json();
+    if(d.ok && (d.order.status==='processing'||d.order.status==='processed')){
+      document.getElementById('statusTitle').textContent='✅ Payment successful';
+      document.getElementById('statusSub').textContent='Payment verify ho gaya. Aapke likes process ho rahe hain, approx 5–10 minute lagenge.';
+      document.getElementById('utrBox').style.display='none';
+      setTimeout(()=>openHistory(currentOrder.uid||document.getElementById('uid').value.trim()),2500);
+      return;
+    }
+    if(d.ok && d.order.status==='rejected'){
+      document.getElementById('statusTitle').textContent='❌ Payment verify nahi hua';
+      document.getElementById('statusSub').textContent='Transaction ID galat ya payment nahi mila. Sahi payment ke saath naya order banao.';
+      return;
+    }
+  }catch(e){}
+  setTimeout(pollStatus,5000);
+}
+</script>
+</body>
+</html>
