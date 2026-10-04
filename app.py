@@ -65,23 +65,23 @@ def favicon():
 
 apps = [
     {
-        "name": "CapCut Ultra",
+        "name": "CapCut",
         "version": "v28.0.0",
         "size": "278.2 MB",
         "icon": "/icons/capcut.png",
-        "description": "Supported All phones, Without VPN usable.",
+        "description": "CapCut video editor.",
         "download": "https://vplink.in/aFaBR"
     },
     {
-        "name": "YouTube Premium",
+        "name": "YouTube",
         "version": "v21.07.247",
         "size": "187.6 MB",
         "icon": "/icons/youtube.png",
-        "description": "All Ads Remove+ Extra Future.",
+        "description": "YouTube app.",
         "download": "https://vplink.in/wUDAn1"
     },
     {
-        "name": "Truecaller Premium",
+        "name": "Truecaller",
         "version": "Latest",
         "size": "Varies",
         "icon": "/icons/truecaller.png",
@@ -89,7 +89,7 @@ apps = [
         "download": "https://vplink.in/kaAj"
     },
     {
-        "name": "Telegram Premium",
+        "name": "Telegram",
         "version": "Latest",
         "size": "Varies",
         "icon": "/icons/telegram.png",
@@ -97,7 +97,7 @@ apps = [
         "download": "https://vplink.in/OIBgy3"
     },
     {
-        "name": "TeraBox Premium",
+        "name": "TeraBox",
         "version": "v4.24.0",
         "size": "Varies",
         "icon": "/icons/terabox.png",
@@ -134,20 +134,6 @@ FF_PACKAGES = [
 
 # Orders: Vercel par Upstash Redis me, local par orders.json me (store.py dekho).
 store = make_store(BASE)
-IS_VERCEL = bool(os.environ.get("VERCEL"))
-
-
-def storage_status():
-    """(ok, text) - admin panel me dikhane ke liye."""
-    if store.kind == "redis":
-        try:
-            store.ping()
-            return True, "Redis connected"
-        except StoreError as e:
-            return False, "Redis connect nahi ho raha: " + str(e)[:80]
-    if IS_VERCEL:
-        return False, "Redis NOT connected - Vercel par orders gayab ho jayenge"
-    return True, "Local file (orders.json)"
 
 
 @app.errorhandler(StoreError)
@@ -184,9 +170,6 @@ def create_ff_order():
     package = next((p for p in FF_PACKAGES if p["id"] == package_id), None)
     if not package:
         return jsonify({"ok": False, "message": "Invalid package."}), 400
-    if IS_VERCEL and store.kind != "redis":
-        # Bina database ke Vercel par order kho jate hain - isliye order lena band.
-        return jsonify({"ok": False, "message": "Ordering temporarily unavailable. Please contact support."}), 503
     res = check_uid(uid)
     if res["status"] not in ("ok", "unconfigured"):
         code = 400 if res["status"] in ("invalid", "not_found") else 503
@@ -324,9 +307,7 @@ def admin():
     count = lambda st: sum(1 for o in all_orders if o["status"] == st)
     stats = {"submitted": count("submitted"), "processing": count("processing"),
              "processed": count("processed"), "total": len(all_orders)}
-    st_ok, st_text = storage_status()
-    return render_template("admin.html", orders=rows, stats=stats, admin_user=ADMIN_USER,
-                           st_ok=st_ok, st_text=st_text)
+    return render_template("admin.html", orders=rows, stats=stats, admin_user=ADMIN_USER)
 
 
 @app.route("/admin/order/<order_id>", methods=["POST"])
