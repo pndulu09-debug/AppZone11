@@ -8,6 +8,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from flask import (Flask, Response, abort, jsonify, redirect, render_template,
                    request, send_from_directory, session, url_for)
 import uuid
+import requests
 from ff_validator import check_uid
 from store import make_store, StoreError, FAIL_WINDOW
 from datetime import datetime, timezone
@@ -134,6 +135,20 @@ FF_PACKAGES = [
 
 # Orders: Vercel par Upstash Redis me, local par orders.json me (store.py dekho).
 store = make_store(BASE)
+IS_VERCEL = bool(os.environ.get("VERCEL"))
+
+
+def storage_status():
+    """(ok, text) - admin panel me dikhane ke liye."""
+    if store.kind == "redis":
+        try:
+            store.ping()
+            return True, "Redis connected"
+        except StoreError as e:
+            return False, "Redis connect nahi ho raha: " + str(e)[:80]
+    if IS_VERCEL:
+        return False, "Redis NOT connected - Vercel par orders gayab ho jayenge"
+    return True, "Local file (orders.json)"
 
 
 @app.errorhandler(StoreError)
@@ -161,6 +176,88 @@ def ff_check_uid():
     return jsonify({"ok": res["status"] in ("ok", "unconfigured"), **res}), code
 
 
+# ---------------- FREE 20 LIKES ----------------
+# API key server par rehti hai (browser me kabhi nahi dikhti). Env se badal sakte ho.
+FREE_LIKE_API = os.environ.get("FREE_LIKE_API", "https://mylikeapi.vercel.app/like")
+FREE_LIKE_KEY = os.environ.get("FREE_LIKE_KEY", "DRIFT")
+FREE_SERVERS = ("IND", "BD")   # API sirf IND aur BD support karti hai
+FREE_COOLDOWN = 24 * 60 * 60   # ek UID ko 24 ghante me ek hi baar
+
+
+def _pick(d, *keys):
+    """JSON me se pehli available key ki value (case-insensitive)."""
+    low = {str(k).lower(): v for k, v in d.items()}
+    for k in keys:
+        if k.lower() in low and low[k.lower()] not in (None, ""):
+            return low[k.lower()]
+    return None
+
+
+def _to_int(v):
+    try:
+        return int(str(v).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+@app.route("/api/free-fire/free-like", methods=["POST"])
+def ff_free_like():
+    try:
+        return _ff_free_like()
+    except StoreError:
+        return jsonify({"ok": False, "message": "Server busy, thodi der baad try karo."}), 503
+    except Exception:
+        # kuch bhi crash ho to HTML error page nahi, JSON message jaye
+        return jsonify({"ok": False, "message": "Server error, thodi der baad try karo."}), 500
+
+
+def _ff_free_like():
+    data = request.get_json(silent=True) or {}
+    uid = str(data.get("uid", "")).strip()
+    server = str(data.get("server", "IND")).strip().upper()
+    if server not in FREE_SERVERS:
+        return jsonify({"ok": False, "message": "Server sirf IND ya BD ho sakta hai."}), 400
+    if not re.fullmatch(r"\d{7,12}", uid):
+        return jsonify({"ok": False, "message": "Sahi UID daalo (7-12 digits)."}), 400
+
+    got, left = store.free_claim(uid + ":" + server, FREE_COOLDOWN)
+    if not got:
+        h, m = left // 3600, (left % 3600) // 60
+        return jsonify({"ok": False, "cooldown": True,
+                        "message": f"Is UID ko free likes mil chuke hain. {h}h {m}m baad dobara try karo."}), 429
+
+    def fail(msg, code=502):
+        store.free_release(uid + ":" + server)      # fail hua to cooldown wapas hata do
+        return jsonify({"ok": False, "message": msg}), code
+
+    try:
+        r = requests.get(FREE_LIKE_API, timeout=50,
+                         params={"uid": uid, "server_name": server, "key": FREE_LIKE_KEY})
+        j = r.json()
+    except (requests.RequestException, ValueError):
+        return fail("Like server abhi busy hai, thodi der baad try karo.")
+    if not isinstance(j, dict):
+        return fail("Like server se galat response aaya.")
+
+    nickname = _pick(j, "PlayerNickname", "nickname", "player_name", "name")
+    before = _to_int(_pick(j, "LikesbeforeCommand", "likes_before", "before"))
+    after = _to_int(_pick(j, "LikesafterCommand", "likes_after", "after"))
+    given = _to_int(_pick(j, "LikesGivenByAPI", "likes_given", "likes_added", "added", "given"))
+    if given is None and before is not None and after is not None:
+        given = after - before
+
+    if given and given > 0:
+        return jsonify({"ok": True, "nickname": nickname or ("UID " + uid), "uid": uid, "server": server,
+                        "added": given, "before": before, "after": after})
+
+    store.free_release(uid + ":" + server)
+    msg = _pick(j, "message", "error", "msg")
+    if given == 0:
+        msg = "Aaj ke liye is UID par likes max ho chuke hain. Kal dobara try karo."
+    return jsonify({"ok": False, "nickname": nickname,
+                    "message": str(msg) if msg else "Likes nahi bheje ja sake. UID check karke dobara try karo."}), 400
+
+
 @app.route("/api/free-fire/order", methods=["POST"])
 def create_ff_order():
     data = request.get_json(silent=True) or {}
@@ -170,6 +267,9 @@ def create_ff_order():
     package = next((p for p in FF_PACKAGES if p["id"] == package_id), None)
     if not package:
         return jsonify({"ok": False, "message": "Invalid package."}), 400
+    if IS_VERCEL and store.kind != "redis":
+        # Bina database ke Vercel par order kho jate hain - isliye order lena band.
+        return jsonify({"ok": False, "message": "Ordering temporarily unavailable. Please contact support."}), 503
     res = check_uid(uid)
     if res["status"] not in ("ok", "unconfigured"):
         code = 400 if res["status"] in ("invalid", "not_found") else 503
@@ -307,7 +407,9 @@ def admin():
     count = lambda st: sum(1 for o in all_orders if o["status"] == st)
     stats = {"submitted": count("submitted"), "processing": count("processing"),
              "processed": count("processed"), "total": len(all_orders)}
-    return render_template("admin.html", orders=rows, stats=stats, admin_user=ADMIN_USER)
+    st_ok, st_text = storage_status()
+    return render_template("admin.html", orders=rows, stats=stats, admin_user=ADMIN_USER,
+                           st_ok=st_ok, st_text=st_text)
 
 
 @app.route("/admin/order/<order_id>", methods=["POST"])

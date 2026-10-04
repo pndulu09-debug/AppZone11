@@ -60,6 +60,9 @@ class RedisStore:
             out.append(item.get("result"))
         return out
 
+    def ping(self):
+        return self._cmd("PING") == "PONG"
+
     def save(self, order):
         self._pipe([
             ["HSET", "ff:orders", order["order_id"], json.dumps(order)],
@@ -90,6 +93,16 @@ class RedisStore:
             return True
         return self._cmd("HGET", "ff:utrs", utr) == order_id
 
+    # free like cooldown (per UID)
+    def free_claim(self, uid, ttl):
+        if self._cmd("SET", "ff:free:" + uid, "1", "NX", "EX", str(int(ttl))) == "OK":
+            return True, 0
+        left = self._cmd("TTL", "ff:free:" + uid)
+        return False, max(int(left or 0), 0)
+
+    def free_release(self, uid):
+        self._cmd("DEL", "ff:free:" + uid)
+
     # login lock
     def fail_get(self, ip):
         cnt, ttl = self._pipe([["GET", "ff:fail:" + ip], ["TTL", "ff:fail:" + ip]])
@@ -111,11 +124,15 @@ class FileStore:
         self.lock = threading.Lock()
         self.orders = {}
         self.fails = {}
+        self.free = {}
         try:
             with open(path, encoding="utf-8") as f:
                 self.orders = {k: _norm(v) for k, v in json.load(f).items()}
         except Exception:
             self.orders = {}
+
+    def ping(self):
+        return True
 
     def _flush(self):
         try:
@@ -145,6 +162,20 @@ class FileStore:
                     return False
             return True
 
+    # free like cooldown (per UID) - memory me
+    def free_claim(self, uid, ttl):
+        with self.lock:
+            now = time.time()
+            until = self.free.get(uid, 0)
+            if until > now:
+                return False, int(until - now)
+            self.free[uid] = now + ttl
+            return True, 0
+
+    def free_release(self, uid):
+        with self.lock:
+            self.free.pop(uid, None)
+
     def fail_get(self, ip):
         cnt, until = self.fails.get(ip, (0, 0))
         if until and until < time.time():
@@ -160,9 +191,22 @@ class FileStore:
         self.fails.pop(ip, None)
 
 
+def _find_redis_env():
+    """Vercel/Upstash env names alag ho sakte hain (custom prefix bhi) - sab check karo."""
+    env = os.environ
+    for url_suffix, tok_suffix in (("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"),
+                                   ("KV_REST_API_URL", "KV_REST_API_TOKEN")):
+        for key, val in env.items():
+            if key.endswith(url_suffix) and val:
+                prefix = key[: -len(url_suffix)]
+                tok = env.get(prefix + tok_suffix)
+                if tok:
+                    return val, tok
+    return None
+
+
 def make_store(base_dir):
-    url = os.environ.get("UPSTASH_REDIS_REST_URL") or os.environ.get("KV_REST_API_URL")
-    tok = os.environ.get("UPSTASH_REDIS_REST_TOKEN") or os.environ.get("KV_REST_API_TOKEN")
-    if url and tok:
-        return RedisStore(url, tok)
+    found = _find_redis_env()
+    if found:
+        return RedisStore(*found)
     return FileStore(os.path.join(base_dir, "orders.json"))
