@@ -42,6 +42,21 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 .hi{margin-top:12px;padding:14px;border-radius:14px;background:#0b0b0b;border:1px solid #272727}.hi .hh{display:flex;justify-content:space-between;gap:10px;align-items:center}.hi .hs{color:#8d8d8d;font-size:12px;margin-top:5px;line-height:1.5}
 .pill{font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
 .p-submitted{background:#2e2600;color:#ffd24a}.p-processing{background:#3a2200;color:#ff9f2e}.p-processed{background:#0c3a17;color:#4cd964}.p-rejected{background:#3a0c0c;color:#ff6565}
+
+.free{margin-top:18px;border-radius:22px;padding:22px;position:relative;overflow:hidden;background:linear-gradient(145deg,#1d0a0a,#0a0a0a);border:1px solid #4a1717;box-shadow:0 25px 70px rgba(255,0,0,.08)}
+.free:before{content:"";position:absolute;top:-80px;right:-60px;width:220px;height:220px;background:#ff3a00;filter:blur(110px);opacity:.18;pointer-events:none}
+.free .tag{display:inline-block;background:linear-gradient(90deg,#ff2424,#ff8a00);font-size:11px;font-weight:900;letter-spacing:1px;padding:4px 11px;border-radius:99px;box-shadow:0 4px 14px rgba(255,60,0,.4)}
+.free h2{font-size:21px;margin:12px 0 4px}.free h2 span{color:var(--red)}
+.free .sub{color:#9a9a9a;font-size:13px;line-height:1.6;margin-bottom:15px}
+.free .pay{margin-top:12px}
+.fres{display:none;margin-top:16px;padding:18px;border-radius:16px;text-align:center;animation:pop .35s ease}
+.fres.show{display:block}.fres.ok{background:linear-gradient(145deg,#0c2a13,#08120b);border:1px solid #1f6b35}.fres.err{background:#1a0808;border:1px solid #5a1c1c;color:#ff7a7a;font-size:14px;line-height:1.6}
+.fres .gn{font-size:12px;color:#7be394;letter-spacing:2px;font-weight:800}
+.fres .nm{font-size:26px;font-weight:900;margin:8px 0 2px;word-break:break-word;text-shadow:0 0 22px rgba(255,80,0,.35)}
+.fres .ud{color:#8d8d8d;font-size:12px}
+.fres .add{font-size:34px;font-weight:900;color:#4cd964;margin:12px 0 2px}
+.fres .cnt{color:#bbb;font-size:13px}.fres .cnt b{color:#fff}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -55,6 +70,15 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 <h1>Free Fire <span>Likes</span></h1>
 <p>Choose your package, enter your Free Fire UID and complete payment.<br>After payment confirmation, your order will move to processing.</p>
 <button type="button" class="histbtn" onclick="openHistory()">📋 Order History</button>
+</section>
+
+<section class="free">
+<span class="tag">🎁 FREE</span>
+<h2>Get <span>20 Free Likes</span></h2>
+<div class="sub">Apna Free Fire UID daalo aur bilkul free 20 likes pao. Ek UID par 24 ghante me ek baar.</div>
+<input id="fUid" class="uid" inputmode="numeric" maxlength="12" placeholder="Enter your Free Fire UID (India server)">
+<button type="button" id="fBtn" class="pay" onclick="freeLike()">🔥 Send 20 Free Likes</button>
+<div id="fRes" class="fres"></div>
 </section>
 
 <section class="card">
@@ -120,6 +144,29 @@ function selectPkg(el){
   el.classList.add('selected'); selected=el;
   document.getElementById('selectedLabel').textContent = el.dataset.label+' • '+el.dataset.perday+'/day • Total '+el.dataset.likes+' Likes';
   document.getElementById('total').textContent='₹'+el.dataset.price;
+}
+
+const fUidEl=document.getElementById('fUid');
+fUidEl.addEventListener('input',()=>{fUidEl.value=fUidEl.value.replace(/\D/g,'')});
+async function freeLike(){
+  const uid=fUidEl.value.trim(), btn=document.getElementById('fBtn'), box=document.getElementById('fRes');
+  const showErr=m=>{box.className='fres err show';box.textContent='❌ '+m};
+  if(!/^\d{7,12}$/.test(uid)){showErr('UID 7-12 digits ka hona chahiye.');return}
+  btn.disabled=true;btn.textContent='Sending likes… (10-20 sec)';box.className='fres';
+  try{
+    const r=await fetch('/api/free-fire/free-like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid})});
+    const d=await r.json();
+    if(!d.ok){showErr(d.message||'Kuch gadbad ho gayi.');return}
+    try{localStorage.setItem('ff_uid',uid)}catch(e){}
+    box.className='fres ok show';box.textContent='';
+    const mk=(c,t)=>{const e=document.createElement('div');e.className=c;e.textContent=t;box.appendChild(e);return e};
+    mk('gn','✅ LIKES SENT');
+    mk('nm',d.nickname);
+    mk('ud','UID: '+d.uid+' • India server');
+    mk('add','+'+d.added+' Likes');
+    if(d.before!=null&&d.after!=null){const c=mk('cnt','');c.append('Likes: ');const b1=document.createElement('b');b1.textContent=d.before;const b2=document.createElement('b');b2.textContent=d.after;c.append(b1,' → ',b2)}
+  }catch(e){showErr('Network error, dobara try karo.')}
+  finally{btn.disabled=false;btn.textContent='🔥 Send 20 Free Likes'}
 }
 
 let verifiedUid=null;
