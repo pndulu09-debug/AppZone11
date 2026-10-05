@@ -200,34 +200,104 @@ def _to_int(v):
         return None
 
 
+def _client_ip():
+    """Asli user ka IP (Vercel proxy ke peeche). IPv6 ho to /64 block use hota hai."""
+    ip = (request.headers.get("X-Vercel-Forwarded-For") or request.headers.get("X-Forwarded-For")
+          or request.remote_addr or "?").split(",")[0].strip()
+    try:
+        import ipaddress
+        addr = ipaddress.ip_address(ip)
+        if addr.version == 6:
+            return str(ipaddress.ip_network(ip + "/64", strict=False).network_address)
+    except ValueError:
+        pass
+    return ip
+
+
+
+def _claim_sig(exp, uid):
+    return hmac.new(SECRET_KEY.encode(), f"ffc|{exp}|{uid}".encode(), "sha256").hexdigest()[:24]
+
+
+def _claim_cookie_left():
+    """Signed cookie (bina database ke bhi kaam karti hai). Bachi hui seconds, ya 0."""
+    try:
+        exp, uid, sig = request.cookies.get("ffc", "").split(".")
+        if hmac.compare_digest(sig, _claim_sig(exp, uid)):
+            return max(int(exp) - int(time.time()), 0)
+    except (ValueError, TypeError):
+        pass
+    return 0
+
+
+def _hms(sec):
+    return f"{sec // 3600}h {(sec % 3600) // 60}m"
+
+
 @app.route("/api/free-fire/free-like", methods=["POST"])
 def ff_free_like():
+    # Device cookie: har browser ko ek random id. IP + cookie dono se "ek bande ek UID" check hota hai.
+    dev = request.cookies.get("ffd", "")
+    new_dev = not re.fullmatch(r"[0-9a-f]{32}", dev)
+    if new_dev:
+        dev = uuid.uuid4().hex
     try:
-        return _ff_free_like()
+        resp = _ff_free_like(dev, _client_ip())
     except StoreError:
-        return jsonify({"ok": False, "message": "Server busy, thodi der baad try karo."}), 503
+        resp = (jsonify({"ok": False, "message": "Server is busy. Please try again in a moment."}), 503)
     except Exception:
         # kuch bhi crash ho to HTML error page nahi, JSON message jaye
-        return jsonify({"ok": False, "message": "Server error, thodi der baad try karo."}), 500
+        resp = (jsonify({"ok": False, "message": "Something went wrong on the server. Please try again in a moment."}), 500)
+    r = app.make_response(resp)
+    if getattr(request, "_ff_claimed", None):
+        exp = int(time.time()) + FREE_COOLDOWN
+        r.set_cookie("ffc", f"{exp}.{request._ff_claimed}.{_claim_sig(exp, request._ff_claimed)}",
+                     max_age=FREE_COOLDOWN, httponly=True, samesite="Lax",
+                     secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
+    if new_dev:
+        r.set_cookie("ffd", dev, max_age=365 * 24 * 3600, httponly=True, samesite="Lax",
+                     secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
+    return r
 
 
-def _ff_free_like():
+def _ff_free_like(dev, ip):
     data = request.get_json(silent=True) or {}
     uid = str(data.get("uid", "")).strip()
     server = str(data.get("server", "IND")).strip().upper()
     if server not in FREE_SERVERS:
-        return jsonify({"ok": False, "message": "Server sirf IND ya BD ho sakta hai."}), 400
+        return jsonify({"ok": False, "message": "Server must be IND or BD."}), 400
     if not re.fullmatch(r"\d{7,12}", uid):
-        return jsonify({"ok": False, "message": "Sahi UID daalo (7-12 digits)."}), 400
+        return jsonify({"ok": False, "message": "Please enter a valid UID (7-12 digits)."}), 400
 
-    got, left = store.free_claim(uid + ":" + server, FREE_COOLDOWN)
-    if not got:
-        h, m = left // 3600, (left % 3600) // 60
+    # Signed cookie check - Redis na ho tab bhi "ek bande ek UID" kaam karega
+    left = _claim_cookie_left()
+    if left:
         return jsonify({"ok": False, "cooldown": True,
-                        "message": f"Is UID ko free likes mil chuke hain. {h}h {m}m baad dobara try karo."}), 429
+                        "message": "You have already claimed your free likes today. Only one UID per person is allowed each day. "
+                                   f"Please try again in {_hms(left)}."}), 429
+
+    # 3 locks: (1) ye banda (IP)  (2) ye banda (device cookie)  (3) ye UID
+    keys = ["ip:" + ip, "dev:" + dev, "uid:" + uid + ":" + server]
+    mine = []
+
+    def release_all():
+        for k in mine:
+            store.free_release(k)
+
+    for k in keys:
+        got, left = store.free_claim(k, FREE_COOLDOWN)
+        if not got:
+            release_all()
+            if k.startswith("uid:"):
+                msg = f"This UID has already received free likes today. Please try again in {_hms(left)}."
+            else:
+                msg = ("You have already claimed your free likes today. Only one UID per person is allowed each day. "
+                       f"Please try again in {_hms(left)}.")
+            return jsonify({"ok": False, "cooldown": True, "message": msg}), 429
+        mine.append(k)
 
     def fail(msg, code=502):
-        store.free_release(uid + ":" + server)      # fail hua to cooldown wapas hata do
+        release_all()      # fail hua to cooldown wapas hata do
         return jsonify({"ok": False, "message": msg}), code
 
     try:
@@ -235,9 +305,9 @@ def _ff_free_like():
                          params={"uid": uid, "server_name": server, "key": FREE_LIKE_KEY})
         j = r.json()
     except (requests.RequestException, ValueError):
-        return fail("Like server abhi busy hai, thodi der baad try karo.")
+        return fail("The like server is busy right now. Please try again in a moment.")
     if not isinstance(j, dict):
-        return fail("Like server se galat response aaya.")
+        return fail("Received an invalid response from the like server. Please try again.")
 
     nickname = _pick(j, "PlayerNickname", "nickname", "player_name", "name")
     before = _to_int(_pick(j, "LikesbeforeCommand", "likes_before", "before"))
@@ -247,15 +317,16 @@ def _ff_free_like():
         given = after - before
 
     if given and given > 0:
+        request._ff_claimed = uid
         return jsonify({"ok": True, "nickname": nickname or ("UID " + uid), "uid": uid, "server": server,
                         "added": given, "before": before, "after": after})
 
-    store.free_release(uid + ":" + server)
+    release_all()
     msg = _pick(j, "message", "error", "msg")
     if given == 0:
-        msg = "Aaj ke liye is UID par likes max ho chuke hain. Kal dobara try karo."
+        msg = "This UID has already received the maximum likes for today. Please try again tomorrow."
     return jsonify({"ok": False, "nickname": nickname,
-                    "message": str(msg) if msg else "Likes nahi bheje ja sake. UID check karke dobara try karo."}), 400
+                    "message": str(msg) if msg else "Likes could not be sent. Please check your UID and try again."}), 400
 
 
 @app.route("/api/free-fire/order", methods=["POST"])
