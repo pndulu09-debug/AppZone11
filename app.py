@@ -11,7 +11,7 @@ import uuid
 import requests
 from ff_validator import check_uid
 from store import make_store, StoreError, FAIL_WINDOW
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
@@ -181,7 +181,18 @@ def ff_check_uid():
 FREE_LIKE_API = os.environ.get("FREE_LIKE_API", "https://mylikeapi.vercel.app/like")
 FREE_LIKE_KEY = os.environ.get("FREE_LIKE_KEY", "DRIFT")
 FREE_SERVERS = ("IND", "BD")   # API sirf IND aur BD support karti hai
-FREE_COOLDOWN = 24 * 60 * 60   # ek UID ko 24 ghante me ek hi baar
+# Daily reset: har raat 4:00 AM IST ko sab limits reset (24 ghante wala cooldown nahi).
+FREE_RESET_HOUR = int(os.environ.get("FREE_RESET_HOUR", "4"))
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def _secs_until_reset():
+    """Ab se agle 4:00 AM IST tak kitne seconds."""
+    now = datetime.now(IST)
+    nxt = now.replace(hour=FREE_RESET_HOUR, minute=0, second=0, microsecond=0)
+    if now >= nxt:
+        nxt += timedelta(days=1)
+    return max(int((nxt - now).total_seconds()), 1)
 
 
 def _pick(d, *keys):
@@ -250,9 +261,10 @@ def ff_free_like():
         resp = (jsonify({"ok": False, "message": "Something went wrong on the server. Please try again in a moment."}), 500)
     r = app.make_response(resp)
     if getattr(request, "_ff_claimed", None):
-        exp = int(time.time()) + FREE_COOLDOWN
+        ttl_c = _secs_until_reset()
+        exp = int(time.time()) + ttl_c
         r.set_cookie("ffc", f"{exp}.{request._ff_claimed}.{_claim_sig(exp, request._ff_claimed)}",
-                     max_age=FREE_COOLDOWN, httponly=True, samesite="Lax",
+                     max_age=ttl_c, httponly=True, samesite="Lax",
                      secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
     if new_dev:
         r.set_cookie("ffd", dev, max_age=365 * 24 * 3600, httponly=True, samesite="Lax",
@@ -274,25 +286,26 @@ def _ff_free_like(dev, ip):
     if left:
         return jsonify({"ok": False, "cooldown": True,
                         "message": "You have already claimed your free likes today. Only one UID per person is allowed each day. "
-                                   f"Please try again in {_hms(left)}."}), 429
+                                   f"Limits reset daily at 4:00 AM IST. Please try again in {_hms(left)}."}), 429
 
     # 3 locks: (1) ye banda (IP)  (2) ye banda (device cookie)  (3) ye UID
     keys = ["ip:" + ip, "dev:" + dev, "uid:" + uid + ":" + server]
     mine = []
+    ttl = _secs_until_reset()
 
     def release_all():
         for k in mine:
             store.free_release(k)
 
     for k in keys:
-        got, left = store.free_claim(k, FREE_COOLDOWN)
+        got, left = store.free_claim(k, ttl)
         if not got:
             release_all()
             if k.startswith("uid:"):
-                msg = f"This UID has already received free likes today. Please try again in {_hms(left)}."
+                msg = f"This UID has already received free likes today. Limits reset daily at 4:00 AM IST (in {_hms(left)})."
             else:
                 msg = ("You have already claimed your free likes today. Only one UID per person is allowed each day. "
-                       f"Please try again in {_hms(left)}.")
+                       f"Limits reset daily at 4:00 AM IST. Please try again in {_hms(left)}.")
             return jsonify({"ok": False, "cooldown": True, "message": msg}), 429
         mine.append(k)
 
