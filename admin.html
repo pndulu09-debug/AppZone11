@@ -19,11 +19,13 @@ body:before{content:"";position:fixed;top:-160px;left:-140px;width:360px;height:
 .k{color:#888}small.m{color:#777}
 .btns{margin-top:10px;display:flex;gap:9px;flex-wrap:wrap}
 button{padding:11px 15px;border:0;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer}.ok{background:#1f9d3a;color:#fff}.no{background:#2a1010;color:#ff6565;border:1px solid #4a1a1a}
+.stg{margin:0 0 12px;padding:10px 13px;border-radius:12px;font-size:12px;font-weight:700}.stg.ok{background:#0c2a14;color:#4cd964;border:1px solid #14401f}.stg.bad{background:#2e0c0c;color:#ff7a7a;border:1px solid #5a1a1a;line-height:1.6}
 .empty{text-align:center;color:#777;margin-top:60px}
 </style></head><body>
 <div class="top"><div class="logo"><span>APP</span>ZONE<small>ADMIN • {{ admin_user }}</small></div>
 <div class="tb"><a href="/admin">↻ Refresh</a><a class="out" href="/admin/logout">Logout</a></div></div>
 <div class="wrap">
+<div class="stg {{ 'ok' if st_ok else 'bad' }}">{{ '🟢' if st_ok else '🔴' }} Storage: {{ st_text }}</div>
 <div class="stats">
 <div class="st w"><b>{{ stats.submitted }}</b><small>TO APPROVE</small></div>
 <div class="st p"><b>{{ stats.processing }}</b><small>PROCESSING</small></div>
@@ -34,7 +36,7 @@ button{padding:11px 15px;border:0;border-radius:11px;font-weight:800;font-size:1
 <div class="o">
 <div class="h"><b>{{ o.order_id }}</b><span class="s {{ o.status }}">{{ o.status }}</span></div>
 <span class="k">UID:</span> <b>{{ o.uid }}</b>{% if o.nickname %} ({{ o.nickname }}){% endif %}{% if not o.verified_uid %} <small class="m">(not verified)</small>{% endif %}<br>
-<span class="k">Package:</span> {{ o.label }} • {{ o.likes }} likes • <b>₹{{ o.amount }}</b><br>
+<span class="k">Package:</span> {{ o.label }} • {{ o.likes }} likes • <b>{% if o.paid_with == 'coins' %}🪙 {{ o.coins }} coins{% else %}₹{{ o.amount }}{% endif %}</b><br>
 <span class="k">UTR:</span> <b>{{ o.utr or '—' }}</b><br>
 <small class="m">{{ o.created_at }}</small>
 {% if o.status == 'processing' %}
@@ -48,7 +50,7 @@ button{padding:11px 15px;border:0;border-radius:11px;font-weight:800;font-size:1
 </div>
 <script>
 async function act(id,a){
-  const msg=a==='approve'?'Payment aa gaya? Approve karein?':(a==='processed'?'Likes bhej diye? Processed mark karein?':'Reject karein?');
+  const msg=a==='approve'?'Payment received? Approve this order?':(a==='processed'?'Likes sent? Mark as processed?':'Reject this order?');
   if(!confirm(msg))return;
   const r=await fetch('/admin/order/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a})});
   if(r.status===401){location.href='/admin/login';return}

@@ -11,33 +11,33 @@ import uuid
 import requests
 from ff_validator import check_uid
 from store import make_store, StoreError, FAIL_WINDOW
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
 TEMPLATES_DIR = os.path.join(BASE, "templates")
 PUBLIC_DIR = os.path.join(BASE, "public")
 
-# templates/ me HTML, public/ me css + icons. static_folder=None -> app.py kabhi public nahi hogi.
+# HTML lives in templates/, css + icons in public/. static_folder=None -> app.py is never exposed.
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=None)
-# Dono structure chalte hain: templates/ folder ya sab files root me (flat, GitHub upload wala).
+# Both layouts work: a templates/ folder, or all files in the root (flat, GitHub upload style).
 app.jinja_loader = ChoiceLoader([FileSystemLoader(TEMPLATES_DIR), FileSystemLoader(BASE)])
 
 
-# ---- Admin login (env variables se badal sakte ho) ----
+# ---- Admin login (can be changed with env variables) ----
 ADMIN_USER = os.environ.get("ADMIN_USER", "admindulu")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "9864")
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "dulu")
-# password bhi key me mila diya: SECRET_KEY chhota ho tab bhi cookie forge karna mushkil rahe
+# the password is mixed into the key so cookies stay hard to forge even if SECRET_KEY is short
 app.secret_key = SECRET_KEY + ":" + ADMIN_PASSWORD
 app.config.update(SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_HTTPONLY=True,
                   PERMANENT_SESSION_LIFETIME=60 * 60 * 12)
 
 
 def _serve_public(sub, filename, mimetype=None):
-    """public/<sub>/ me dhundo, nahi mila to root me (flat structure)."""
+    """Look in public/<sub>/ first, then in the root (flat structure)."""
     for folder in (os.path.join(PUBLIC_DIR, sub), BASE):
         if os.path.isfile(os.path.join(folder, filename)):
             return send_from_directory(folder, filename, mimetype=mimetype)
@@ -53,7 +53,7 @@ def css(filename):
 
 @app.route("/icons/<path:filename>")
 def icons(filename):
-    # sirf .png files allow hain
+    # only .png files are allowed
     if "/" in filename or not filename.lower().endswith(".png"):
         abort(404)
     return _serve_public("icons", filename)
@@ -122,30 +122,42 @@ PAYEE_NAME = os.environ.get("PAYEE_NAME", "APPZONE")
 
 LIKES_PER_DAY = 220
 _PKG_DEFS = [
-    ("1d", "1 Day", 1, 15, True),     # hot=True -> "HOT" badge
+    ("1d", "1 Day", 1, 15, True),     # hot=True -> shows the "HOT" badge
     ("7d", "7 Days", 7, 60, False),
     ("15d", "15 Days", 15, 100, False),
     ("30d", "30 Days", 30, 180, False),
 ]
+
+
+def _orig_price(price):
+    """Price before the 25% discount, rounded to a multiple of 5 (15 -> 20, 60 -> 80, 100 -> 135, 180 -> 240)."""
+    return int(round(price / 0.75 / 5.0)) * 5
+
+
 FF_PACKAGES = [
     {"id": i, "label": label, "days": d, "per_day": LIKES_PER_DAY,
-     "likes": LIKES_PER_DAY * d, "price": price, "hot": hot}
+     "likes": LIKES_PER_DAY * d, "price": price, "orig": _orig_price(price),
+     "off": round((1 - price / _orig_price(price)) * 100), "hot": hot}
     for i, label, d, price, hot in _PKG_DEFS
 ]
 
-# Orders: Vercel par Upstash Redis me, local par orders.json me (store.py dekho).
+# Orders: Upstash Redis on Vercel, orders.json locally (see store.py).
 store = make_store(BASE)
 IS_VERCEL = bool(os.environ.get("VERCEL"))
 
+# Coins, referral, ads (vplink) and privacy policy routes live in coins.py
+import coins
+coins.init(app, store, IS_VERCEL, FF_PACKAGES[0])
+
 
 def storage_status():
-    """(ok, text) - admin panel me dikhane ke liye."""
+    """(ok, text) - shown in the admin panel."""
     if store.kind == "redis":
         try:
             store.ping()
             return True, "Redis connected"
         except StoreError as e:
-            return False, "Redis connect nahi ho raha: " + str(e)[:80]
+            return False, "Redis is not connecting: " + str(e)[:80]
     if IS_VERCEL:
         return False, "Redis NOT connected - Vercel par orders gayab ho jayenge"
     return True, "Local file (orders.json)"
@@ -154,8 +166,8 @@ def storage_status():
 @app.errorhandler(StoreError)
 def _store_down(e):
     if request.path.startswith("/api/") or request.path.startswith("/admin/order"):
-        return jsonify({"ok": False, "message": "Server busy, thodi der baad try karo."}), 503
-    return Response("Database error. Thodi der baad try karo.", 503)
+        return jsonify({"ok": False, "message": "Server is busy. Please try again in a moment."}), 503
+    return Response("Database error. Please try again in a moment.", 503)
 
 
 def _upi_url(order):
@@ -177,26 +189,15 @@ def ff_check_uid():
 
 
 # ---------------- FREE 20 LIKES ----------------
-# API key server par rehti hai (browser me kabhi nahi dikhti). Env se badal sakte ho.
+# The API key stays on the server (never visible in the browser). Can be changed via env.
 FREE_LIKE_API = os.environ.get("FREE_LIKE_API", "https://mylikeapi.vercel.app/like")
 FREE_LIKE_KEY = os.environ.get("FREE_LIKE_KEY", "DRIFT")
-FREE_SERVERS = ("IND", "BD")   # API sirf IND aur BD support karti hai
-# Daily reset: har raat 4:00 AM IST ko sab limits reset (24 ghante wala cooldown nahi).
-FREE_RESET_HOUR = int(os.environ.get("FREE_RESET_HOUR", "4"))
-IST = timezone(timedelta(hours=5, minutes=30))
-
-
-def _secs_until_reset():
-    """Ab se agle 4:00 AM IST tak kitne seconds."""
-    now = datetime.now(IST)
-    nxt = now.replace(hour=FREE_RESET_HOUR, minute=0, second=0, microsecond=0)
-    if now >= nxt:
-        nxt += timedelta(days=1)
-    return max(int((nxt - now).total_seconds()), 1)
+FREE_SERVERS = ("IND", "BD")   # the API only supports IND and BD
+FREE_COOLDOWN = 24 * 60 * 60   # one free claim per UID every 24 hours
 
 
 def _pick(d, *keys):
-    """JSON me se pehli available key ki value (case-insensitive)."""
+    """Value of the first available key in the JSON (case-insensitive)."""
     low = {str(k).lower(): v for k, v in d.items()}
     for k in keys:
         if k.lower() in low and low[k.lower()] not in (None, ""):
@@ -212,7 +213,7 @@ def _to_int(v):
 
 
 def _client_ip():
-    """Asli user ka IP (Vercel proxy ke peeche). IPv6 ho to /64 block use hota hai."""
+    """Real user IP (behind the Vercel proxy). For IPv6 the /64 block is used."""
     ip = (request.headers.get("X-Vercel-Forwarded-For") or request.headers.get("X-Forwarded-For")
           or request.remote_addr or "?").split(",")[0].strip()
     try:
@@ -231,7 +232,7 @@ def _claim_sig(exp, uid):
 
 
 def _claim_cookie_left():
-    """Signed cookie (bina database ke bhi kaam karti hai). Bachi hui seconds, ya 0."""
+    """Signed cookie (works even without a database). Returns seconds left, or 0."""
     try:
         exp, uid, sig = request.cookies.get("ffc", "").split(".")
         if hmac.compare_digest(sig, _claim_sig(exp, uid)):
@@ -247,8 +248,8 @@ def _hms(sec):
 
 @app.route("/api/free-fire/free-like", methods=["POST"])
 def ff_free_like():
-    # Device cookie: har browser ko ek random id. IP + cookie dono se "ek bande ek UID" check hota hai.
-    dev = request.cookies.get("ffd", "")
+    # Device id: the app sends X-Device, browsers get a random cookie id. IP + device both enforce "one person, one UID".
+    dev = request.headers.get("X-Device", "").strip().lower() or request.cookies.get("ffd", "")
     new_dev = not re.fullmatch(r"[0-9a-f]{32}", dev)
     if new_dev:
         dev = uuid.uuid4().hex
@@ -257,14 +258,13 @@ def ff_free_like():
     except StoreError:
         resp = (jsonify({"ok": False, "message": "Server is busy. Please try again in a moment."}), 503)
     except Exception:
-        # kuch bhi crash ho to HTML error page nahi, JSON message jaye
+        # on any crash return a JSON message, not an HTML error page
         resp = (jsonify({"ok": False, "message": "Something went wrong on the server. Please try again in a moment."}), 500)
     r = app.make_response(resp)
     if getattr(request, "_ff_claimed", None):
-        ttl_c = _secs_until_reset()
-        exp = int(time.time()) + ttl_c
+        exp = int(time.time()) + FREE_COOLDOWN
         r.set_cookie("ffc", f"{exp}.{request._ff_claimed}.{_claim_sig(exp, request._ff_claimed)}",
-                     max_age=ttl_c, httponly=True, samesite="Lax",
+                     max_age=FREE_COOLDOWN, httponly=True, samesite="Lax",
                      secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
     if new_dev:
         r.set_cookie("ffd", dev, max_age=365 * 24 * 3600, httponly=True, samesite="Lax",
@@ -281,36 +281,35 @@ def _ff_free_like(dev, ip):
     if not re.fullmatch(r"\d{7,12}", uid):
         return jsonify({"ok": False, "message": "Please enter a valid UID (7-12 digits)."}), 400
 
-    # Signed cookie check - Redis na ho tab bhi "ek bande ek UID" kaam karega
+    # Signed cookie check - "one person, one UID" works even without Redis
     left = _claim_cookie_left()
     if left:
         return jsonify({"ok": False, "cooldown": True,
                         "message": "You have already claimed your free likes today. Only one UID per person is allowed each day. "
-                                   f"Limits reset daily at 4:00 AM IST. Please try again in {_hms(left)}."}), 429
+                                   f"Please try again in {_hms(left)}."}), 429
 
-    # 3 locks: (1) ye banda (IP)  (2) ye banda (device cookie)  (3) ye UID
+    # 3 locks: (1) this person (IP)  (2) this person (device)  (3) this UID
     keys = ["ip:" + ip, "dev:" + dev, "uid:" + uid + ":" + server]
     mine = []
-    ttl = _secs_until_reset()
 
     def release_all():
         for k in mine:
             store.free_release(k)
 
     for k in keys:
-        got, left = store.free_claim(k, ttl)
+        got, left = store.free_claim(k, FREE_COOLDOWN)
         if not got:
             release_all()
             if k.startswith("uid:"):
-                msg = f"This UID has already received free likes today. Limits reset daily at 4:00 AM IST (in {_hms(left)})."
+                msg = f"This UID has already received free likes today. Please try again in {_hms(left)}."
             else:
                 msg = ("You have already claimed your free likes today. Only one UID per person is allowed each day. "
-                       f"Limits reset daily at 4:00 AM IST. Please try again in {_hms(left)}.")
+                       f"Please try again in {_hms(left)}.")
             return jsonify({"ok": False, "cooldown": True, "message": msg}), 429
         mine.append(k)
 
     def fail(msg, code=502):
-        release_all()      # fail hua to cooldown wapas hata do
+        release_all()      # if it failed, remove the cooldown again
         return jsonify({"ok": False, "message": msg}), code
 
     try:
@@ -352,7 +351,7 @@ def create_ff_order():
     if not package:
         return jsonify({"ok": False, "message": "Invalid package."}), 400
     if IS_VERCEL and store.kind != "redis":
-        # Bina database ke Vercel par order kho jate hain - isliye order lena band.
+        # Without a database, orders are lost on Vercel - so ordering is disabled.
         return jsonify({"ok": False, "message": "Ordering temporarily unavailable. Please contact support."}), 503
     res = check_uid(uid)
     if res["status"] not in ("ok", "unconfigured"):
@@ -372,7 +371,7 @@ def create_ff_order():
         "likes": package["likes"],
         "amount": package["price"],
         "utr": None,
-        "status": "pending",   # pending -> submitted (UTR diya) -> processing (payment approve) -> processed / rejected
+        "status": "pending",   # pending -> submitted (UTR given) -> processing (payment approved) -> processed / rejected
         "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
     store.save(order)
@@ -389,10 +388,10 @@ def ff_order_status(order_id):
 
 @app.route("/api/free-fire/history")
 def ff_history():
-    """Customer apna UID daal ke apne orders ka status dekhta hai (UTR/private data nahi dikhta)."""
+    """A customer enters their UID to see their order status (UTR / private data is not shown)."""
     uid = request.args.get("uid", "").strip()
     if not re.fullmatch(r"\d{7,12}", uid):
-        return jsonify({"ok": False, "message": "Sahi UID daalo (7-12 digits)."}), 400
+        return jsonify({"ok": False, "message": "Please enter a valid UID (7-12 digits)."}), 400
     mine = [o for o in store.by_uid(uid) if o["status"] != "pending"]
     mine.sort(key=lambda o: o["created_at"], reverse=True)
     items = [{"order_id": o["order_id"], "label": o["label"], "likes": o["likes"],
@@ -420,18 +419,18 @@ def ff_order_qr(order_id):
 
 @app.route("/api/free-fire/order/<order_id>/utr", methods=["POST"])
 def ff_submit_utr(order_id):
-    """Customer payment karke apna 12-digit UTR/Transaction ID bhejta hai. Admin check karke approve karta hai."""
+    """The customer pays and submits the 12-digit UTR / Transaction ID. The admin checks it and approves."""
     order = store.get(order_id)
     if not order:
         return jsonify({"ok": False, "message": "Order not found."}), 404
     data = request.get_json(silent=True) or {}
     utr = str(data.get("utr", "")).strip()
     if not re.fullmatch(r"\d{12}", utr):
-        return jsonify({"ok": False, "message": "UTR / Transaction ID 12 digits ka hona chahiye."}), 400
+        return jsonify({"ok": False, "message": "UTR / Transaction ID must be 12 digits."}), 400
     if order["status"] in ("processing", "processed", "rejected"):
-        return jsonify({"ok": False, "message": "Ye order already process ho chuka hai."}), 400
+        return jsonify({"ok": False, "message": "This order has already been processed."}), 400
     if not store.claim_utr(utr, order_id):
-        return jsonify({"ok": False, "message": "Ye Transaction ID pehle hi use ho chuka hai."}), 400
+        return jsonify({"ok": False, "message": "This Transaction ID has already been used."}), 400
     order["utr"] = utr
     order["status"] = "submitted"
     store.save(order)
@@ -515,9 +514,9 @@ def admin_action(order_id):
 @app.route("/api/payment/webhook", methods=["POST"])
 def payment_webhook():
     """
-    Payment-gateway webhook (baad me gateway lagane par).
-    PAYMENT_WEBHOOK_SECRET set hona zaruri hai, warna koi bhi order paid kar sakta hai.
-    Gateway ki signature verification yahan add karni hogi.
+    Payment-gateway webhook (for when a gateway is added later).
+    PAYMENT_WEBHOOK_SECRET must be set, otherwise anyone could mark an order as paid.
+    The gateway signature verification must be added here.
     """
     secret = os.environ.get("PAYMENT_WEBHOOK_SECRET", "")
     got = request.headers.get("X-Webhook-Secret", "")

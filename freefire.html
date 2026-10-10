@@ -23,7 +23,7 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 .uid{width:100%;padding:15px;border-radius:13px;border:1px solid #303030;background:#080808;color:#fff;outline:0;font-size:15px}.uid:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,0,0,.06)}
 .packages{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:15px}
 .pkg{cursor:pointer;background:#0b0b0b;border:1px solid #292929;border-radius:16px;padding:18px 12px;text-align:center;transition:.2s}.pkg:hover{transform:translateY(-3px);border-color:#6b2020}.pkg.selected{border-color:var(--red);background:#1a0808;box-shadow:0 0 0 1px rgba(255,36,36,.15)}
-.pkg .days{color:#bbb;font-size:12px}.pkg .price{font-size:25px;font-weight:900;margin:8px 0 3px}.pkg .likes{color:#ff6565;font-size:12px}
+.pkg .days{color:#bbb;font-size:12px}.pkg .price{font-size:25px;font-weight:900;margin:2px 0 4px}.pkg .orig{color:#777;text-decoration:line-through;font-size:13px;margin-top:8px}.pkg .off{display:inline-block;background:#12301a;color:#4cd964;font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;margin-bottom:5px}.total s{color:#777;font-size:15px;font-weight:600;margin-right:6px}.pkg .likes{color:#ff6565;font-size:12px}
 .summary{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;padding:15px;border-radius:14px;background:#0b0b0b;border:1px solid #252525}.summary small{color:#777}.total{font-size:25px;font-weight:900;color:#ff4444}
 .pay{width:100%;margin-top:15px;padding:16px;border:0;border-radius:13px;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 12px 35px rgba(255,0,0,.2)}.pay:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .note{margin-top:13px;color:#777;font-size:12px;line-height:1.6;text-align:center}
@@ -42,37 +42,6 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 .hi{margin-top:12px;padding:14px;border-radius:14px;background:#0b0b0b;border:1px solid #272727}.hi .hh{display:flex;justify-content:space-between;gap:10px;align-items:center}.hi .hs{color:#8d8d8d;font-size:12px;margin-top:5px;line-height:1.5}
 .pill{font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
 .p-submitted{background:#2e2600;color:#ffd24a}.p-processing{background:#3a2200;color:#ff9f2e}.p-processed{background:#0c3a17;color:#4cd964}.p-rejected{background:#3a0c0c;color:#ff6565}
-
-.free{margin-top:18px;border-radius:22px;padding:22px;position:relative;overflow:hidden;background:linear-gradient(145deg,#1d0a0a,#0a0a0a);border:1px solid #4a1717;box-shadow:0 25px 70px rgba(255,0,0,.08)}
-.free:before{content:"";position:absolute;top:-80px;right:-60px;width:220px;height:220px;background:#ff3a00;filter:blur(110px);opacity:.18;pointer-events:none}
-.free .tag{display:inline-block;background:linear-gradient(90deg,#ff2424,#ff8a00);font-size:11px;font-weight:900;letter-spacing:1px;padding:4px 11px;border-radius:99px;box-shadow:0 4px 14px rgba(255,60,0,.4)}
-.free h2{font-size:21px;margin:12px 0 4px}.free h2 span{color:var(--red)}
-.free .sub{color:#9a9a9a;font-size:13px;line-height:1.6;margin-bottom:15px}
-.free .pay{margin-top:12px}
-.srv{display:flex;gap:10px;margin-bottom:12px}.sv{flex:1;padding:12px 8px;border-radius:12px;border:1px solid #303030;background:#0b0b0b;color:#bbb;font-weight:800;font-size:13px;cursor:pointer}.sv.on{border-color:var(--red);background:#1a0808;color:#fff;box-shadow:0 0 0 1px rgba(255,36,36,.15)}
-.fres{display:none;margin-top:16px;padding:18px;border-radius:16px;text-align:center;animation:pop .35s ease}
-.fres.show{display:block}.fres.ok{background:linear-gradient(145deg,#0c2a13,#08120b);border:1px solid #1f6b35}.fres.err{background:#1a0808;border:1px solid #5a1c1c;color:#ff7a7a;font-size:14px;line-height:1.6}
-.fres .gn{font-size:12px;color:#7be394;letter-spacing:2px;font-weight:800}
-.fres .nm{font-size:26px;font-weight:900;margin:8px 0 2px;word-break:break-word;text-shadow:0 0 22px rgba(255,80,0,.35)}
-.fres .ud{color:#8d8d8d;font-size:12px}
-.fres .add{font-size:34px;font-weight:900;color:#4cd964;margin:12px 0 2px}
-.fres .pw{margin-top:14px;padding-top:12px;border-top:1px dashed #1f6b35;font-size:12px;font-weight:800;letter-spacing:2px;color:#7be394}.fres .pw a{background:linear-gradient(90deg,#ff2424,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none}
-.fres .cnt{color:#bbb;font-size:13px}.fres .cnt b{color:#fff}
-@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
-
-.cr{max-width:850px;margin:34px auto 0;padding:22px 18px;border-radius:22px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(145deg,#161616,#090909);border:1px solid #272727;font-family:Arial,Helvetica,sans-serif;color:#fff}
-.cr:before{content:"";position:absolute;left:50%;top:-90px;width:260px;height:160px;transform:translateX(-50%);background:#ff2a00;filter:blur(90px);opacity:.16;pointer-events:none}
-.cr .cr-t{font-size:11px;letter-spacing:3px;color:#8a8a8a;font-weight:700}
-.cr .cr-n{font-size:26px;font-weight:900;letter-spacing:1px;margin:6px 0 4px}
-.cr .cr-n span{background:linear-gradient(90deg,#ff2424,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent}
-.cr .cr-s{color:#8d8d8d;font-size:12px;margin-bottom:16px}
-.cr .cr-b{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.cr a{flex:1 1 150px;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 12px;border-radius:14px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;border:1px solid #2c2c2c;background:#0e0e0e;transition:.2s}
-.cr a:hover{transform:translateY(-3px)}
-.cr a svg{width:19px;height:19px;flex:none}
-.cr .tg{border-color:#1d4a63;background:linear-gradient(145deg,#0d2230,#0a0f14)}.cr .tg:hover{box-shadow:0 8px 26px rgba(38,165,228,.22)}
-.cr .ig{border-color:#5a2140;background:linear-gradient(145deg,#2a0d1d,#120a0e)}.cr .ig:hover{box-shadow:0 8px 26px rgba(225,48,108,.22)}
-.cr .ch{flex-basis:100%;border-color:#5a1c1c;background:linear-gradient(145deg,#2a0c0c,#120808)}.cr .ch:hover{box-shadow:0 8px 26px rgba(255,36,36,.22)}
 </style>
 </head>
 <body>
@@ -88,16 +57,6 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 <button type="button" class="histbtn" onclick="openHistory()">📋 Order History</button>
 </section>
 
-<section class="free">
-<span class="tag">🎁 FREE</span>
-<h2>Get <span>20 Free Likes</span></h2>
-<div class="sub">Enter your Free Fire UID and get 20 likes absolutely free. One UID per person per day. Resets every day at 4:00 AM IST.</div>
-<div class="srv"><button type="button" class="sv on" data-s="IND" onclick="pickSrv(this)">🇮🇳 India (IND)</button><button type="button" class="sv" data-s="BD" onclick="pickSrv(this)">🇧🇩 Bangladesh (BD)</button></div>
-<input id="fUid" class="uid" inputmode="numeric" maxlength="12" placeholder="Enter your Free Fire UID">
-<button type="button" id="fBtn" class="pay" onclick="freeLike()">🔥 Send 20 Free Likes</button>
-<div id="fRes" class="fres"></div>
-</section>
-
 <section class="card">
 <h2>1. Enter Free Fire UID</h2>
 <input id="uid" class="uid" inputmode="numeric" maxlength="12" placeholder="Enter your Free Fire UID (India server)">
@@ -108,15 +67,15 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 <h2 style="margin-top:24px">2. Select package</h2>
 <div class="packages">
 {% for p in packages %}
-<div class="pkg{% if loop.first %} selected{% endif %}" data-id="{{p.id}}" data-price="{{p.price}}" data-likes="{{p.likes}}" data-label="{{p.label}}" data-perday="{{p.per_day}}" onclick="selectPkg(this)">{% if p.hot %}<div class="hotb">🔥 HOT</div>{% endif %}
-<div class="days">{{p.label}}</div><div class="price">₹{{p.price}}</div><div class="likes">{{p.per_day}} Likes/day</div><div class="likes" style="font-weight:800;margin-top:4px">Total {{p.likes}} Likes</div>
+<div class="pkg{% if loop.first %} selected{% endif %}" data-id="{{p.id}}" data-orig="{{p.orig}}" data-price="{{p.price}}" data-likes="{{p.likes}}" data-label="{{p.label}}" data-perday="{{p.per_day}}" onclick="selectPkg(this)">{% if p.hot %}<div class="hotb">🔥 HOT</div>{% endif %}
+<div class="days">{{p.label}}</div><div class="orig">₹{{p.orig}}</div><div class="price">₹{{p.price}}</div><div class="off">{{p.off}}% OFF</div><div class="likes">{{p.per_day}} Likes/day</div><div class="likes" style="font-weight:800;margin-top:4px">Total {{p.likes}} Likes</div>
 </div>
 {% endfor %}
 </div>
 
 <div class="summary">
 <div><small>Selected package</small><br><b id="selectedLabel">{{packages[0].label}} • {{packages[0].per_day}}/day • Total {{packages[0].likes}} Likes</b></div>
-<div class="total" id="total">₹{{packages[0].price}}</div>
+<div class="total" id="total"><s>₹{{packages[0].orig}}</s>₹{{packages[0].price}}</div>
 </div>
 
 <button id="payBtn" class="pay" onclick="startOrder()">Continue to Payment →</button>
@@ -125,12 +84,12 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 <div id="paymentBox" class="qrbox">
 <div style="font-weight:800">Complete your payment</div>
 <div class="amt" id="payAmt"></div>
-<div class="sub" style="color:#777;font-size:12px;margin-top:5px">Exact amount pay karo. QR scan karo ya button dabao.</div>
+<div class="sub" style="color:#777;font-size:12px;margin-top:5px">Pay the exact amount. Scan the QR or tap the button.</div>
 <img id="qrImg" alt="UPI QR" style="display:none;width:210px;height:210px;background:#fff;padding:8px;border-radius:12px;margin:12px auto 0" onerror="this.style.display='none'">
 <div class="upi" id="upiText">{{upi_id}}</div>
 <a id="upiBtn" class="upi-btn" href="#">Pay via UPI App</a>
 <div id="utrBox" style="margin-top:18px;text-align:left">
-<label>Payment ke baad 12-digit Transaction ID / UTR yaha daalo:</label>
+<label>After paying, enter your 12-digit Transaction ID / UTR here:</label>
 <input id="utr" class="uid" inputmode="numeric" maxlength="12" placeholder="12-digit UTR number">
 <button id="utrBtn" class="pay" onclick="submitUtr()">Submit Transaction ID</button>
 </div>
@@ -138,26 +97,16 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 
 <div id="status" class="status">
 <div class="title" id="statusTitle">⏳ Payment pending</div>
-<div class="sub" id="statusSub">Payment karke Transaction ID submit karo. Verify hone ke baad likes 5–10 minute me process honge.</div>
+<div class="sub" id="statusSub">Pay, then submit your Transaction ID. After verification, likes are processed within 5–10 minutes.</div>
 </div>
 </section>
-
-<div class="cr">
-<div class="cr-t">CREATED BY</div>
-<div class="cr-n">🔥 <span>DULU</span></div>
-<div class="cr-s">Follow for more free tools, bots &amp; updates</div>
-<div class="cr-b">
-<a class="tg" href="https://t.me/dulu_x" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="#29b6f6"><path d="M21.9 4.3 18.7 19.6c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 13.1l-5-1.6c-1.1-.3-1.1-1.1.2-1.6L20.4 2.5c.9-.3 1.7.2 1.5 1.8Z"/></svg>@dulu_x</a>
-<a class="ig" href="https://instagram.com/dulu._.09" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="#ff4f8b" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r=".9" fill="#ff4f8b" stroke="none"/></svg>@dulu._.09</a>
-<a class="ch" href="https://t.me/dulubots" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="#ff3b3b"><path d="M21.9 4.3 18.7 19.6c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 13.1l-5-1.6c-1.1-.3-1.1-1.1.2-1.6L20.4 2.5c.9-.3 1.7.2 1.5 1.8Z"/></svg>Join my Telegram Channel</a>
-</div>
-</div>
+<div style="text-align:center;margin-top:34px;font-size:12px;color:#666"><a href="/privacy" style="color:#888">Privacy Policy</a> • <a href="https://t.me/dulu_x" style="color:#888">Support</a></div>
 </main>
 
 <div id="histOv" class="ov" onclick="if(event.target===this)closeHistory()">
 <div class="sheet">
 <div class="hd"><h2>Order History</h2><button class="xbtn" onclick="closeHistory()">✕</button></div>
-<div style="color:#8d8d8d;font-size:12px;margin-bottom:8px">Apna Free Fire UID daalo</div>
+<div style="color:#8d8d8d;font-size:12px;margin-bottom:8px">Enter your Free Fire UID</div>
 <div class="srow"><input id="hUid" class="uid" inputmode="numeric" maxlength="12" placeholder="Free Fire UID"><button class="sbtn" onclick="loadHistory()">Search</button></div>
 <div id="hList"></div>
 </div>
@@ -171,34 +120,7 @@ function selectPkg(el){
   document.querySelectorAll('.pkg').forEach(x=>x.classList.remove('selected'));
   el.classList.add('selected'); selected=el;
   document.getElementById('selectedLabel').textContent = el.dataset.label+' • '+el.dataset.perday+'/day • Total '+el.dataset.likes+' Likes';
-  document.getElementById('total').textContent='₹'+el.dataset.price;
-}
-
-const fUidEl=document.getElementById('fUid');
-fUidEl.addEventListener('input',()=>{fUidEl.value=fUidEl.value.replace(/\D/g,'')});
-let fSrv='IND';
-function pickSrv(el){document.querySelectorAll('.sv').forEach(x=>x.classList.remove('on'));el.classList.add('on');fSrv=el.dataset.s}
-async function freeLike(){
-  const uid=fUidEl.value.trim(), btn=document.getElementById('fBtn'), box=document.getElementById('fRes');
-  const showErr=m=>{box.className='fres err show';box.textContent='❌ '+m};
-  if(!/^\d{7,12}$/.test(uid)){showErr('UID must be 7-12 digits.');return}
-  btn.disabled=true;btn.textContent='Sending likes… (10-20 sec)';box.className='fres';
-  try{
-    const r=await fetch('/api/free-fire/free-like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid,server:fSrv})});
-    let d=null;try{d=await r.json()}catch(_){}
-    if(!d){showErr('The server returned an invalid response (code '+r.status+'). Please try again in a moment.');return}
-    if(!d.ok){showErr(d.message||'Something went wrong. Please try again.');return}
-    try{localStorage.setItem('ff_uid',uid)}catch(e){}
-    box.className='fres ok show';box.textContent='';
-    const mk=(c,t)=>{const e=document.createElement('div');e.className=c;e.textContent=t;box.appendChild(e);return e};
-    mk('gn','✅ LIKES SENT');
-    mk('nm',d.nickname);
-    mk('ud','UID: '+d.uid+' • '+(d.server==='BD'?'Bangladesh':'India')+' server');
-    mk('add','+'+d.added+' Likes');
-    if(d.before!=null&&d.after!=null){const c=mk('cnt','');c.append('Likes: ');const b1=document.createElement('b');b1.textContent=d.before;const b2=document.createElement('b');b2.textContent=d.after;c.append(b1,' → ',b2)}
-    const pw=mk('pw','⚡ POWERED BY ');const pa=document.createElement('a');pa.href='https://t.me/dulubots';pa.target='_blank';pa.rel='noopener noreferrer';pa.textContent='DULU';pw.appendChild(pa);
-  }catch(e){showErr('Network error. Please try again.')}
-  finally{btn.disabled=false;btn.textContent='🔥 Send 20 Free Likes'}
+  document.getElementById('total').innerHTML='<s>₹'+Number(el.dataset.orig)+'</s>₹'+Number(el.dataset.price);
 }
 
 let verifiedUid=null;
@@ -210,14 +132,14 @@ uidEl.addEventListener('input',()=>{
 
 async function verifyUid(){
   const uid=document.getElementById('uid').value.trim(), box=document.getElementById('uidInfo');
-  if(!/^\d{7,12}$/.test(uid)){box.style.color='#ff5656';box.textContent='❌ UID 7-12 digits ka hona chahiye.';return false}
+  if(!/^\d{7,12}$/.test(uid)){box.style.color='#ff5656';box.textContent='❌ UID must be 7-12 digits.';return false}
   box.style.color='#aaa';box.textContent='Checking…';
   try{
     const r=await fetch('/api/free-fire/check-uid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid})});
     const d=await r.json();
     if(d.status==='ok'){box.style.color='#4cd964';box.textContent='✅ '+d.nickname+' • India server • Current likes: '+d.likes;verifiedUid=uid;chkBtn.style.display='none';return true}
     if(d.status==='unconfigured'){box.style.color='#4cd964';box.textContent='✅ UID: '+uid;verifiedUid=uid;chkBtn.style.display='none';return true}
-    box.style.color='#ff5656';box.textContent='❌ '+(d.message||'Verify nahi ho paya');return false
+    box.style.color='#ff5656';box.textContent='❌ '+(d.message||'Could not verify');return false
   }catch(e){box.style.color='#ff5656';box.textContent='❌ Network error';return false}
 }
 
@@ -247,15 +169,15 @@ async function startOrder(){
 async function submitUtr(){
   const utr=document.getElementById('utr').value.trim();
   if(!currentOrder)return;
-  if(!/^\d{12}$/.test(utr)){alert('12-digit Transaction ID / UTR daalo.');return}
+  if(!/^\d{12}$/.test(utr)){alert('Please enter the 12-digit Transaction ID / UTR.');return}
   const b=document.getElementById('utrBtn'); b.disabled=true;
   try{
     const r=await fetch('/api/free-fire/order/'+currentOrder.order_id+'/utr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utr:utr})});
     const d=await r.json();
-    if(!d.ok) throw new Error(d.message||'Submit nahi hua');
+    if(!d.ok) throw new Error(d.message||'Could not submit');
     document.getElementById('utrBox').style.display='none';
-    document.getElementById('statusTitle').textContent='🔎 Payment verify ho raha hai';
-    document.getElementById('statusSub').textContent='Transaction ID mil gaya. Verify hote hi order process hoga (approx 5–10 minute). Is page ko khula rakho.';
+    document.getElementById('statusTitle').textContent='🔎 Verifying your payment';
+    document.getElementById('statusSub').textContent='Transaction ID received. Your order will be processed once verified (about 5–10 minutes). Keep this page open.';
   }catch(e){alert(e.message)}
   finally{b.disabled=false}
 }
@@ -273,12 +195,12 @@ function openHistory(uid){
 function closeHistory(){document.getElementById('histOv').classList.remove('show');clearInterval(histTimer)}
 async function loadHistory(silent){
   const uid=document.getElementById('hUid').value.trim(), box=document.getElementById('hList');
-  if(!/^\d{7,12}$/.test(uid)){box.innerHTML='';const p=document.createElement('div');p.className='hs';p.style.cssText='color:#ff5656;margin-top:12px;font-size:13px';p.textContent='❌ Sahi UID daalo (7-12 digits).';box.appendChild(p);return}
+  if(!/^\d{7,12}$/.test(uid)){box.innerHTML='';const p=document.createElement('div');p.className='hs';p.style.cssText='color:#ff5656;margin-top:12px;font-size:13px';p.textContent='❌ Please enter a valid UID (7-12 digits).';box.appendChild(p);return}
   if(!silent){box.textContent='Loading…';box.style.cssText='color:#888;margin-top:12px;font-size:13px'}
   try{
     const r=await fetch('/api/free-fire/history?uid='+encodeURIComponent(uid));const d=await r.json();
     box.innerHTML='';box.style.cssText='';
-    if(!d.ok||!d.orders.length){const p=document.createElement('div');p.style.cssText='color:#888;margin-top:14px;font-size:13px';p.textContent=d.ok?'Is UID par abhi koi order nahi mila.':(d.message||'Error');box.appendChild(p);return}
+    if(!d.ok||!d.orders.length){const p=document.createElement('div');p.style.cssText='color:#888;margin-top:14px;font-size:13px';p.textContent=d.ok?'No orders found for this UID yet.':(d.message||'Error');box.appendChild(p);return}
     try{localStorage.setItem('ff_uid',uid)}catch(e){}
     d.orders.forEach(o=>{
       const it=document.createElement('div');it.className='hi';
@@ -302,14 +224,14 @@ async function pollStatus(){
     const d=await r.json();
     if(d.ok && (d.order.status==='processing'||d.order.status==='processed')){
       document.getElementById('statusTitle').textContent='✅ Payment successful';
-      document.getElementById('statusSub').textContent='Payment verify ho gaya. Aapke likes process ho rahe hain, approx 5–10 minute lagenge.';
+      document.getElementById('statusSub').textContent='Payment verified. Your likes are being processed and will arrive in about 5–10 minutes.';
       document.getElementById('utrBox').style.display='none';
       setTimeout(()=>openHistory(currentOrder.uid||document.getElementById('uid').value.trim()),2500);
       return;
     }
     if(d.ok && d.order.status==='rejected'){
-      document.getElementById('statusTitle').textContent='❌ Payment verify nahi hua';
-      document.getElementById('statusSub').textContent='Transaction ID galat ya payment nahi mila. Sahi payment ke saath naya order banao.';
+      document.getElementById('statusTitle').textContent='❌ Payment could not be verified';
+      document.getElementById('statusSub').textContent='The Transaction ID is wrong or the payment was not found. Please create a new order with a valid payment.';
       return;
     }
   }catch(e){}
