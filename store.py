@@ -1,11 +1,11 @@
 """
 Order storage.
 
-- On Vercel: Upstash Redis (REST API) is used, so orders are stored permanently.
-  Env vars (created automatically when you connect Upstash from Vercel Storage):
+- Vercel par: Upstash Redis (REST API) use hota hai -> orders permanent save rehte hain.
+  Env vars (Vercel Storage se Upstash connect karne par apne aap bante hain):
       UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
-      or  KV_REST_API_URL / KV_REST_API_TOKEN
-- Termux / local: an orders.json file is used.
+      ya  KV_REST_API_URL / KV_REST_API_TOKEN
+- Termux / local par: orders.json file use hoti hai.
 """
 import json
 import os
@@ -14,7 +14,7 @@ import time
 
 import requests
 
-FAIL_WINDOW = 300   # login lock time (seconds)
+FAIL_WINDOW = 300   # login lock ka time (seconds)
 
 
 class StoreError(Exception):
@@ -22,7 +22,7 @@ class StoreError(Exception):
 
 
 def _norm(order):
-    if order and order.get("status") == "paid":     # old name
+    if order and order.get("status") == "paid":     # purana naam
         order["status"] = "processing"
     return order
 
@@ -93,42 +93,6 @@ class RedisStore:
             return True
         return self._cmd("HGET", "ff:utrs", utr) == order_id
 
-
-    # ---- generic key/value helpers (coins, referrals, ads, locks) ----
-    def kv_get(self, key):
-        return self._cmd("GET", key)
-
-    def kv_set(self, key, val, ttl=None):
-        if ttl:
-            self._cmd("SET", key, str(val), "EX", int(ttl))
-        else:
-            self._cmd("SET", key, str(val))
-
-    def kv_setnx(self, key, val, ttl=None):
-        args = ["SET", key, str(val), "NX"] + (["EX", int(ttl)] if ttl else [])
-        return self._cmd(*args) == "OK"
-
-    def kv_del(self, key):
-        self._cmd("DEL", key)
-
-    def kv_incr(self, key, n=1, ttl=None):
-        res = int(self._cmd("INCRBY", key, int(n)))
-        if ttl and res == n:
-            self._cmd("EXPIRE", key, int(ttl))
-        return res
-
-    def kv_ttl(self, key):
-        return max(int(self._cmd("TTL", key) or 0), 0)
-
-    # free-like locks
-    def free_claim(self, key, ttl):
-        if self.kv_setnx("ff:free:" + key, 1, ttl):
-            return True, 0
-        return False, self.kv_ttl("ff:free:" + key)
-
-    def free_release(self, key):
-        self.kv_del("ff:free:" + key)
-
     # login lock
     def fail_get(self, ip):
         cnt, ttl = self._pipe([["GET", "ff:fail:" + ip], ["TTL", "ff:fail:" + ip]])
@@ -150,7 +114,6 @@ class FileStore:
         self.lock = threading.Lock()
         self.orders = {}
         self.fails = {}
-        self.kv = {}
         try:
             with open(path, encoding="utf-8") as f:
                 self.orders = {k: _norm(v) for k, v in json.load(f).items()}
@@ -188,54 +151,6 @@ class FileStore:
                     return False
             return True
 
-
-    # ---- generic key/value helpers (coins, referrals, ads, locks) ----
-    def _kv_live(self, key):
-        v = self.kv.get(key)
-        if v and v[1] and v[1] < time.time():
-            self.kv.pop(key, None)
-            return None
-        return v
-
-    def kv_get(self, key):
-        v = self._kv_live(key)
-        return v[0] if v else None
-
-    def kv_set(self, key, val, ttl=None):
-        with self.lock:
-            self.kv[key] = (str(val), time.time() + ttl if ttl else 0)
-
-    def kv_setnx(self, key, val, ttl=None):
-        with self.lock:
-            if self._kv_live(key):
-                return False
-            self.kv[key] = (str(val), time.time() + ttl if ttl else 0)
-            return True
-
-    def kv_del(self, key):
-        with self.lock:
-            self.kv.pop(key, None)
-
-    def kv_incr(self, key, n=1, ttl=None):
-        with self.lock:
-            v = self._kv_live(key)
-            cur = int(v[0]) if v else 0
-            exp = v[1] if v else (time.time() + ttl if ttl else 0)
-            self.kv[key] = (str(cur + n), exp)
-            return cur + n
-
-    def kv_ttl(self, key):
-        v = self._kv_live(key)
-        return max(int(v[1] - time.time()), 0) if v and v[1] else 0
-
-    def free_claim(self, key, ttl):
-        if self.kv_setnx("ff:free:" + key, 1, ttl):
-            return True, 0
-        return False, self.kv_ttl("ff:free:" + key)
-
-    def free_release(self, key):
-        self.kv_del("ff:free:" + key)
-
     def fail_get(self, ip):
         cnt, until = self.fails.get(ip, (0, 0))
         if until and until < time.time():
@@ -252,7 +167,7 @@ class FileStore:
 
 
 def _find_redis_env():
-    """Vercel/Upstash env names can differ (custom prefixes too), so check all of them."""
+    """Vercel/Upstash env names alag ho sakte hain (custom prefix bhi) - sab check karo."""
     env = os.environ
     for url_suffix, tok_suffix in (("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"),
                                    ("KV_REST_API_URL", "KV_REST_API_TOKEN")):

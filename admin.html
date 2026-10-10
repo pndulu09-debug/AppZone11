@@ -36,7 +36,7 @@ button{padding:11px 15px;border:0;border-radius:11px;font-weight:800;font-size:1
 <div class="o">
 <div class="h"><b>{{ o.order_id }}</b><span class="s {{ o.status }}">{{ o.status }}</span></div>
 <span class="k">UID:</span> <b>{{ o.uid }}</b>{% if o.nickname %} ({{ o.nickname }}){% endif %}{% if not o.verified_uid %} <small class="m">(not verified)</small>{% endif %}<br>
-<span class="k">Package:</span> {{ o.label }} • {{ o.likes }} likes • <b>{% if o.paid_with == 'coins' %}🪙 {{ o.coins }} coins{% else %}₹{{ o.amount }}{% endif %}</b><br>
+<span class="k">Package:</span> {{ o.label }} • {{ o.likes }} likes • <b>₹{{ o.amount }}</b><br>
 <span class="k">UTR:</span> <b>{{ o.utr or '—' }}</b><br>
 <small class="m">{{ o.created_at }}</small>
 {% if o.status == 'processing' %}
@@ -50,7 +50,7 @@ button{padding:11px 15px;border:0;border-radius:11px;font-weight:800;font-size:1
 </div>
 <script>
 async function act(id,a){
-  const msg=a==='approve'?'Payment received? Approve this order?':(a==='processed'?'Likes sent? Mark as processed?':'Reject this order?');
+  const msg=a==='approve'?'Payment aa gaya? Approve karein?':(a==='processed'?'Likes bhej diye? Processed mark karein?':'Reject karein?');
   if(!confirm(msg))return;
   const r=await fetch('/admin/order/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a})});
   if(r.status===401){location.href='/admin/login';return}

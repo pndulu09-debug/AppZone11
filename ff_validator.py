@@ -1,13 +1,13 @@
 """
 Free Fire UID validator (INDIA server only).
 
-Fetches player info from the game server (client.ind.freefiremobile.com).
-Only India server UIDs are found - UIDs from other servers return "not_found".
+Game server (client.ind.freefiremobile.com) se player info nikalta hai.
+Sirf India server ke UID milenge - dusre server ka UID "not_found" aayega.
 
-Required: a valid JWT token (from a guest account), set as an env var:
+Zaruri: ek valid JWT token chahiye (guest account ka), env var me do:
     export FF_JWT_TOKEN="eyJ..."
-The token expires after a few hours; set a new one when it does.
-Optional: FF_RELEASE_VERSION (changes with game updates, e.g. OB52)
+Token kuch ghante me expire hota hai, expire hone par naya daalna padega.
+Optional: FF_RELEASE_VERSION (game update ke saath badalta hai, e.g. OB52)
 """
 import os
 import re
@@ -41,20 +41,20 @@ def valid_format(uid: str) -> bool:
 def check_uid(uid: str) -> dict:
     """
     'status' values:
-      ok            -> UID is real (India server), returned with nickname + likes
-      not_found     -> UID not found on the India server
-      invalid       -> wrong format
-      unconfigured  -> FF_JWT_TOKEN not set (only the format was checked)
+      ok            -> UID real hai (India server), nickname + likes ke saath
+      not_found     -> UID India server par nahi mila
+      invalid       -> format galat
+      unconfigured  -> FF_JWT_TOKEN set nahi hai (sirf format check hua)
       error         -> network/token problem
     """
     uid = str(uid).strip()
     if not valid_format(uid):
-        return {"status": "invalid", "message": "UID must be 7-12 digits."}
+        return {"status": "invalid", "message": "UID 7-12 digits ka hona chahiye."}
 
     token = os.environ.get("FF_JWT_TOKEN", "").strip()
     if not token:
         return {"status": "unconfigured",
-                "message": "UID verification is not configured on the server (only the format was checked)."}
+                "message": "Server par UID verification set nahi hai (sirf format check hua)."}
 
     hit = _cache.get(uid)
     if hit and time.time() - hit[0] < CACHE_SECONDS:
@@ -80,22 +80,22 @@ def check_uid(uid: str) -> dict:
     try:
         r = requests.post(URL, data=payload, headers=headers, timeout=12)
     except requests.RequestException:
-        return {"status": "error", "message": "Could not connect to the Free Fire server. Please try again in a moment."}
+        return {"status": "error", "message": "Free Fire server se connect nahi ho paya. Thodi der baad try karo."}
 
     if r.status_code in (401, 403):
-        return {"status": "error", "message": "The verification token has expired (the admin needs to set a new one)."}
+        return {"status": "error", "message": "Verification token expire ho gaya hai (admin ko naya token dalna hoga)."}
     if r.status_code != 200 or not r.content:
-        return {"status": "not_found", "message": "This UID was not found on the India server."}
+        return {"status": "not_found", "message": "Ye UID India server par nahi mila."}
 
     try:
         info = like_count_pb2.Info()
         info.ParseFromString(r.content)
         acc = info.AccountInfo
     except Exception:
-        return {"status": "not_found", "message": "This UID was not found on the India server."}
+        return {"status": "not_found", "message": "Ye UID India server par nahi mila."}
 
     if acc.UID != int(uid) or not acc.PlayerNickname:
-        return {"status": "not_found", "message": "This UID was not found on the India server."}
+        return {"status": "not_found", "message": "Ye UID India server par nahi mila."}
 
     result = {"status": "ok", "uid": uid, "nickname": acc.PlayerNickname,
               "likes": acc.Likes, "server": "IND"}
