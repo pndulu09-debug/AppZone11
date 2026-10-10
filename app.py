@@ -8,7 +8,6 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from flask import (Flask, Response, abort, jsonify, redirect, render_template,
                    request, send_from_directory, session, url_for)
 import uuid
-import requests
 from ff_validator import check_uid
 from store import make_store, StoreError, FAIL_WINDOW
 from datetime import datetime, timezone
@@ -135,20 +134,6 @@ FF_PACKAGES = [
 
 # Orders: Vercel par Upstash Redis me, local par orders.json me (store.py dekho).
 store = make_store(BASE)
-IS_VERCEL = bool(os.environ.get("VERCEL"))
-
-
-def storage_status():
-    """(ok, text) - admin panel me dikhane ke liye."""
-    if store.kind == "redis":
-        try:
-            store.ping()
-            return True, "Redis connected"
-        except StoreError as e:
-            return False, "Redis connect nahi ho raha: " + str(e)[:80]
-    if IS_VERCEL:
-        return False, "Redis NOT connected - Vercel par orders gayab ho jayenge"
-    return True, "Local file (orders.json)"
 
 
 @app.errorhandler(StoreError)
@@ -176,159 +161,6 @@ def ff_check_uid():
     return jsonify({"ok": res["status"] in ("ok", "unconfigured"), **res}), code
 
 
-# ---------------- FREE 20 LIKES ----------------
-# API key server par rehti hai (browser me kabhi nahi dikhti). Env se badal sakte ho.
-FREE_LIKE_API = os.environ.get("FREE_LIKE_API", "https://mylikeapi.vercel.app/like")
-FREE_LIKE_KEY = os.environ.get("FREE_LIKE_KEY", "DRIFT")
-FREE_SERVERS = ("IND", "BD")   # API sirf IND aur BD support karti hai
-FREE_COOLDOWN = 24 * 60 * 60   # ek UID ko 24 ghante me ek hi baar
-
-
-def _pick(d, *keys):
-    """JSON me se pehli available key ki value (case-insensitive)."""
-    low = {str(k).lower(): v for k, v in d.items()}
-    for k in keys:
-        if k.lower() in low and low[k.lower()] not in (None, ""):
-            return low[k.lower()]
-    return None
-
-
-def _to_int(v):
-    try:
-        return int(str(v).replace(",", "").strip())
-    except (TypeError, ValueError):
-        return None
-
-
-def _client_ip():
-    """Asli user ka IP (Vercel proxy ke peeche). IPv6 ho to /64 block use hota hai."""
-    ip = (request.headers.get("X-Vercel-Forwarded-For") or request.headers.get("X-Forwarded-For")
-          or request.remote_addr or "?").split(",")[0].strip()
-    try:
-        import ipaddress
-        addr = ipaddress.ip_address(ip)
-        if addr.version == 6:
-            return str(ipaddress.ip_network(ip + "/64", strict=False).network_address)
-    except ValueError:
-        pass
-    return ip
-
-
-
-def _claim_sig(exp, uid):
-    return hmac.new(SECRET_KEY.encode(), f"ffc|{exp}|{uid}".encode(), "sha256").hexdigest()[:24]
-
-
-def _claim_cookie_left():
-    """Signed cookie (bina database ke bhi kaam karti hai). Bachi hui seconds, ya 0."""
-    try:
-        exp, uid, sig = request.cookies.get("ffc", "").split(".")
-        if hmac.compare_digest(sig, _claim_sig(exp, uid)):
-            return max(int(exp) - int(time.time()), 0)
-    except (ValueError, TypeError):
-        pass
-    return 0
-
-
-def _hms(sec):
-    return f"{sec // 3600}h {(sec % 3600) // 60}m"
-
-
-@app.route("/api/free-fire/free-like", methods=["POST"])
-def ff_free_like():
-    # Device cookie: har browser ko ek random id. IP + cookie dono se "ek bande ek UID" check hota hai.
-    dev = request.cookies.get("ffd", "")
-    new_dev = not re.fullmatch(r"[0-9a-f]{32}", dev)
-    if new_dev:
-        dev = uuid.uuid4().hex
-    try:
-        resp = _ff_free_like(dev, _client_ip())
-    except StoreError:
-        resp = (jsonify({"ok": False, "message": "Server is busy. Please try again in a moment."}), 503)
-    except Exception:
-        # kuch bhi crash ho to HTML error page nahi, JSON message jaye
-        resp = (jsonify({"ok": False, "message": "Something went wrong on the server. Please try again in a moment."}), 500)
-    r = app.make_response(resp)
-    if getattr(request, "_ff_claimed", None):
-        exp = int(time.time()) + FREE_COOLDOWN
-        r.set_cookie("ffc", f"{exp}.{request._ff_claimed}.{_claim_sig(exp, request._ff_claimed)}",
-                     max_age=FREE_COOLDOWN, httponly=True, samesite="Lax",
-                     secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
-    if new_dev:
-        r.set_cookie("ffd", dev, max_age=365 * 24 * 3600, httponly=True, samesite="Lax",
-                     secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
-    return r
-
-
-def _ff_free_like(dev, ip):
-    data = request.get_json(silent=True) or {}
-    uid = str(data.get("uid", "")).strip()
-    server = str(data.get("server", "IND")).strip().upper()
-    if server not in FREE_SERVERS:
-        return jsonify({"ok": False, "message": "Server must be IND or BD."}), 400
-    if not re.fullmatch(r"\d{7,12}", uid):
-        return jsonify({"ok": False, "message": "Please enter a valid UID (7-12 digits)."}), 400
-
-    # Signed cookie check - Redis na ho tab bhi "ek bande ek UID" kaam karega
-    left = _claim_cookie_left()
-    if left:
-        return jsonify({"ok": False, "cooldown": True,
-                        "message": "You have already claimed your free likes today. Only one UID per person is allowed each day. "
-                                   f"Please try again in {_hms(left)}."}), 429
-
-    # 3 locks: (1) ye banda (IP)  (2) ye banda (device cookie)  (3) ye UID
-    keys = ["ip:" + ip, "dev:" + dev, "uid:" + uid + ":" + server]
-    mine = []
-
-    def release_all():
-        for k in mine:
-            store.free_release(k)
-
-    for k in keys:
-        got, left = store.free_claim(k, FREE_COOLDOWN)
-        if not got:
-            release_all()
-            if k.startswith("uid:"):
-                msg = f"This UID has already received free likes today. Please try again in {_hms(left)}."
-            else:
-                msg = ("You have already claimed your free likes today. Only one UID per person is allowed each day. "
-                       f"Please try again in {_hms(left)}.")
-            return jsonify({"ok": False, "cooldown": True, "message": msg}), 429
-        mine.append(k)
-
-    def fail(msg, code=502):
-        release_all()      # fail hua to cooldown wapas hata do
-        return jsonify({"ok": False, "message": msg}), code
-
-    try:
-        r = requests.get(FREE_LIKE_API, timeout=50,
-                         params={"uid": uid, "server_name": server, "key": FREE_LIKE_KEY})
-        j = r.json()
-    except (requests.RequestException, ValueError):
-        return fail("The like server is busy right now. Please try again in a moment.")
-    if not isinstance(j, dict):
-        return fail("Received an invalid response from the like server. Please try again.")
-
-    nickname = _pick(j, "PlayerNickname", "nickname", "player_name", "name")
-    before = _to_int(_pick(j, "LikesbeforeCommand", "likes_before", "before"))
-    after = _to_int(_pick(j, "LikesafterCommand", "likes_after", "after"))
-    given = _to_int(_pick(j, "LikesGivenByAPI", "likes_given", "likes_added", "added", "given"))
-    if given is None and before is not None and after is not None:
-        given = after - before
-
-    if given and given > 0:
-        request._ff_claimed = uid
-        return jsonify({"ok": True, "nickname": nickname or ("UID " + uid), "uid": uid, "server": server,
-                        "added": given, "before": before, "after": after})
-
-    release_all()
-    msg = _pick(j, "message", "error", "msg")
-    if given == 0:
-        msg = "This UID has already received the maximum likes for today. Please try again tomorrow."
-    return jsonify({"ok": False, "nickname": nickname,
-                    "message": str(msg) if msg else "Likes could not be sent. Please check your UID and try again."}), 400
-
-
 @app.route("/api/free-fire/order", methods=["POST"])
 def create_ff_order():
     data = request.get_json(silent=True) or {}
@@ -338,9 +170,6 @@ def create_ff_order():
     package = next((p for p in FF_PACKAGES if p["id"] == package_id), None)
     if not package:
         return jsonify({"ok": False, "message": "Invalid package."}), 400
-    if IS_VERCEL and store.kind != "redis":
-        # Bina database ke Vercel par order kho jate hain - isliye order lena band.
-        return jsonify({"ok": False, "message": "Ordering temporarily unavailable. Please contact support."}), 503
     res = check_uid(uid)
     if res["status"] not in ("ok", "unconfigured"):
         code = 400 if res["status"] in ("invalid", "not_found") else 503
@@ -478,9 +307,7 @@ def admin():
     count = lambda st: sum(1 for o in all_orders if o["status"] == st)
     stats = {"submitted": count("submitted"), "processing": count("processing"),
              "processed": count("processed"), "total": len(all_orders)}
-    st_ok, st_text = storage_status()
-    return render_template("admin.html", orders=rows, stats=stats, admin_user=ADMIN_USER,
-                           st_ok=st_ok, st_text=st_text)
+    return render_template("admin.html", orders=rows, stats=stats, admin_user=ADMIN_USER)
 
 
 @app.route("/admin/order/<order_id>", methods=["POST"])
