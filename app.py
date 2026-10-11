@@ -11,7 +11,7 @@ import uuid
 import requests
 from ff_validator import check_uid
 from store import make_store, StoreError, FAIL_WINDOW
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
@@ -181,7 +181,17 @@ def ff_check_uid():
 FREE_LIKE_API = os.environ.get("FREE_LIKE_API", "https://mylikeapi.vercel.app/like")
 FREE_LIKE_KEY = os.environ.get("FREE_LIKE_KEY", "DRIFT")
 FREE_SERVERS = ("IND", "BD")   # API sirf IND aur BD support karti hai
-FREE_COOLDOWN = 24 * 60 * 60   # ek UID ko 24 ghante me ek hi baar
+RESET_HOUR_IST = 4             # free likes roz subah 4:00 AM IST par reset (game ke time se)
+
+
+def _secs_to_reset():
+    """Abhi se agle 4:00 AM IST tak ke seconds."""
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist)
+    nxt = now.replace(hour=RESET_HOUR_IST, minute=0, second=0, microsecond=0)
+    if nxt <= now:
+        nxt += timedelta(days=1)
+    return max(int((nxt - now).total_seconds()), 1)
 
 
 def _pick(d, *keys):
@@ -250,9 +260,10 @@ def ff_free_like():
         resp = (jsonify({"ok": False, "message": "Something went wrong on the server. Please try again in a moment."}), 500)
     r = app.make_response(resp)
     if getattr(request, "_ff_claimed", None):
-        exp = int(time.time()) + FREE_COOLDOWN
+        cd = _secs_to_reset()
+        exp = int(time.time()) + cd
         r.set_cookie("ffc", f"{exp}.{request._ff_claimed}.{_claim_sig(exp, request._ff_claimed)}",
-                     max_age=FREE_COOLDOWN, httponly=True, samesite="Lax",
+                     max_age=cd, httponly=True, samesite="Lax",
                      secure=request.is_secure or request.headers.get("X-Forwarded-Proto") == "https")
     if new_dev:
         r.set_cookie("ffd", dev, max_age=365 * 24 * 3600, httponly=True, samesite="Lax",
@@ -279,13 +290,14 @@ def _ff_free_like(dev, ip):
     # 3 locks: (1) ye banda (IP)  (2) ye banda (device cookie)  (3) ye UID
     keys = ["ip:" + ip, "dev:" + dev, "uid:" + uid + ":" + server]
     mine = []
+    reset_in = _secs_to_reset()   # sabka cooldown agle 4:00 AM IST par khatam
 
     def release_all():
         for k in mine:
             store.free_release(k)
 
     for k in keys:
-        got, left = store.free_claim(k, FREE_COOLDOWN)
+        got, left = store.free_claim(k, reset_in)
         if not got:
             release_all()
             if k.startswith("uid:"):
