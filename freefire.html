@@ -21,7 +21,7 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 .card{background:linear-gradient(145deg,#151515,#090909);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 25px 70px rgba(0,0,0,.4);margin-top:18px}
 .card h2{font-size:19px;margin-bottom:15px}
 .uid{width:100%;padding:15px;border-radius:13px;border:1px solid #303030;background:#080808;color:#fff;outline:0;font-size:15px}.uid:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,0,0,.06)}
-.packages{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:15px}
+.packages{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:15px}
 .pkg{cursor:pointer;background:#0b0b0b;border:1px solid #292929;border-radius:16px;padding:18px 12px;text-align:center;transition:.2s}.pkg:hover{transform:translateY(-3px);border-color:#6b2020}.pkg.selected{border-color:var(--red);background:#1a0808;box-shadow:0 0 0 1px rgba(255,36,36,.15)}
 .pkg .days{color:#bbb;font-size:12px}.pkg .price{font-size:25px;font-weight:900;margin:8px 0 3px}.pkg .likes{color:#ff6565;font-size:12px}
 .summary{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;padding:15px;border-radius:14px;background:#0b0b0b;border:1px solid #252525}.summary small{color:#777}.total{font-size:25px;font-weight:900;color:#ff4444}
@@ -30,6 +30,7 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 .status{display:none;margin-top:18px;padding:16px;border-radius:15px;border:1px solid #292929;background:#0b0b0b}.status.show{display:block}.status .title{font-weight:800;margin-bottom:6px}.status .sub{color:#8d8d8d;font-size:12px;line-height:1.6}
 .qrbox{display:none;text-align:center;margin-top:15px;padding:18px;border:1px dashed #3a3a3a;border-radius:15px;background:#090909}.qrbox.show{display:block}.upi{font-weight:800;color:#ff5656;word-break:break-all;margin:8px 0 12px}.upi-btn{display:inline-block;padding:12px 15px;border-radius:11px;background:#ff2424;color:#fff;text-decoration:none;font-size:13px;font-weight:800}
 @media(max-width:650px){.packages{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.summary{align-items:flex-start}}
+@media(min-width:651px){.packages{grid-template-columns:repeat(3,1fr)}}
 .pkg{position:relative}.hotb{position:absolute;top:-9px;right:10px;background:linear-gradient(90deg,#ff2424,#ff8a00);color:#fff;font-size:11px;font-weight:900;padding:3px 10px;border-radius:99px;letter-spacing:1px;box-shadow:0 4px 14px rgba(255,60,0,.4)}.amt{font-size:26px;font-weight:900;color:#ff4444;margin-top:8px}.qrbox label{display:block;color:#aaa;font-size:12px;margin-bottom:8px}
 .fire{display:flex;justify-content:center}.fireico{filter:drop-shadow(0 0 18px rgba(255,90,0,.45))}
 .histbtn{margin-top:14px;padding:11px 18px;border-radius:99px;border:1px solid #3a2020;background:#140909;color:#fff;font-weight:700;font-size:13px;cursor:pointer}
@@ -109,7 +110,7 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 <div class="packages">
 {% for p in packages %}
 <div class="pkg{% if loop.first %} selected{% endif %}" data-id="{{p.id}}" data-price="{{p.price}}" data-likes="{{p.likes}}" data-label="{{p.label}}" data-perday="{{p.per_day}}" onclick="selectPkg(this)">{% if p.hot %}<div class="hotb">🔥 HOT</div>{% endif %}
-<div class="days">{{p.label}}</div><div class="price">₹{{p.price}}</div><div class="likes">{{p.per_day}} Likes/day</div><div class="likes" style="font-weight:800;margin-top:4px">Total {{p.likes}} Likes</div>
+<div class="days">{{p.label}}</div><div class="price">₹{{p.price}}</div><div class="likes">{{p.per_day}} Likes/day</div><div class="likes" style="font-weight:800;margin-top:4px">Total {{p.likes}} Likes</div>{% if p.note %}<div style="margin-top:6px;font-size:10px;color:#ff9a3c;font-weight:700;letter-spacing:.5px">{{p.note}}</div>{% endif %}
 </div>
 {% endfor %}
 </div>

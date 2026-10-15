@@ -122,14 +122,17 @@ PAYEE_NAME = os.environ.get("PAYEE_NAME", "APPZONE")
 
 LIKES_PER_DAY = 220
 _PKG_DEFS = [
-    ("1d", "1 Day", 1, 15, True),     # hot=True -> "HOT" badge
-    ("7d", "7 Days", 7, 60, False),
+    ("1d",  "1 Day",   1,  18,  True),   # hot=True -> "HOT" badge
+    ("7d",  "7 Days",  7,  60,  False),
     ("15d", "15 Days", 15, 100, False),
     ("30d", "30 Days", 30, 180, False),
+    ("60d", "60 Days", 60, 450, False),
+    ("90d", "90 Days", 90, 800, False),
 ]
 FF_PACKAGES = [
     {"id": i, "label": label, "days": d, "per_day": LIKES_PER_DAY,
-     "likes": LIKES_PER_DAY * d, "price": price, "hot": hot}
+     "likes": LIKES_PER_DAY * d, "price": price, "hot": hot,
+     "note": "⚡ Server fees included" if i == "30d" else None}
     for i, label, d, price, hot in _PKG_DEFS
 ]
 
