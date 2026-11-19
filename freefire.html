@@ -91,12 +91,8 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 
 <section class="free">
 <span class="tag">🎁 FREE</span>
-<h2>Get <span>20 Free Likes</span></h2>
-<div class="sub">Enter your Free Fire UID and get 20 likes absolutely free. One UID per person per day. Resets every day at 4:00 AM IST.</div>
-<div class="srv"><button type="button" class="sv on" data-s="IND" onclick="pickSrv(this)">🇮🇳 India (IND)</button><button type="button" class="sv" data-s="BD" onclick="pickSrv(this)">🇧🇩 Bangladesh (BD)</button></div>
-<input id="fUid" class="uid" inputmode="numeric" maxlength="12" placeholder="Enter your Free Fire UID">
-<button type="button" id="fBtn" class="pay" onclick="freeLike()">🔥 Send 20 Free Likes</button>
-<div id="fRes" class="fres"></div>
+<h2>20 Free Likes — <span>Coming Soon</span></h2>
+<div class="sub">The free 20 likes feature will be available soon. Please check back later for updates.</div>
 </section>
 
 <section class="card">
@@ -167,6 +163,18 @@ body:before{top:-150px;left:-130px}body:after{right:-150px;bottom:-130px}
 <script>
 let selected = document.querySelector('.pkg.selected');
 let currentOrder = null;
+
+// Frontend display update: change the ₹180 package to ₹220.
+document.querySelectorAll('.pkg').forEach(el => {
+  if (Number(el.dataset.price) === 180) {
+    el.dataset.price = '220';
+    const priceEl = el.querySelector('.price');
+    if (priceEl) priceEl.textContent = '₹220';
+  }
+});
+const initialSelected = document.querySelector('.pkg.selected');
+if (initialSelected) document.getElementById('total').textContent = '₹' + initialSelected.dataset.price;
+
 
 function selectPkg(el){
   document.querySelectorAll('.pkg').forEach(x=>x.classList.remove('selected'));
